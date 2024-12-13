@@ -14,7 +14,6 @@ import spray.json.JsonWriter.func2Writer
 import spray.json.JsonReader.func2Reader
 import spray.json.DefaultJsonProtocol.*
 import shared.adapters.presentation.HealthCheckError
-import shared.ports.MetricsService
 import rides.domain.model.*
 import rides.ports.RidesService
 import rides.adapters.presentation.dto.*
@@ -35,18 +34,14 @@ object HttpPresentationAdapter:
   given RootJsonFormat[StartRideDTO] = jsonFormat2(StartRideDTO.apply)
   given RootJsonFormat[HealthCheckError] = jsonFormat1(HealthCheckError.apply)
 
-  private val metricsCounterName = "rides_service_requests"
-
   def startHttpServer(
       ridesService: RidesService,
       host: String,
-      port: Int,
-      metricsService: MetricsService
+      port: Int
   )(using ActorSystem[Any]): Future[ServerBinding] =
     val route =
       concat(
         pathPrefix("rides"):
-          metricsService.incrementCounterByOne(metricsCounterName)
           concat(
             (path("active") & get):
               complete(ridesService.activeRides().toArray)

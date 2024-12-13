@@ -11,7 +11,6 @@ import users.domain.model.*
 import users.domain.UsersServiceImpl
 import users.adapters.presentation.HttpPresentationAdapter
 import users.adapters.persistence.UsersFileSystemRepositoryAdapter
-import shared.adapters.MetricsServiceAdapter
 
 object Main extends App:
   given actorSystem: ActorSystem[Any] =
@@ -21,9 +20,6 @@ object Main extends App:
   val db = FileSystemDatabaseImpl(File("/data/db"))
   val adapter = UsersFileSystemRepositoryAdapter(db)
   val usersService = UsersServiceImpl(adapter)
-  val metricsServiceAddress =
-    sys.env.get("METRICS_SERVICE_ADDRESS").getOrElse("localhost:8080")
-  val metricsService = MetricsServiceAdapter(metricsServiceAddress)
   val host = sys.env.get("HOST").getOrElse("0.0.0.0")
   val port = (for
     portString <- sys.env.get("PORT")
@@ -33,10 +29,5 @@ object Main extends App:
   yield (portInt)).getOrElse(8080)
 
   HttpPresentationAdapter
-    .startHttpServer(usersService, host, port, metricsService)
+    .startHttpServer(usersService, host, port)
     .map(_ => println(s"Users is listening on $host:$port"))
-    .map(_ =>
-      metricsService.registerForHealthcheckMonitoring(
-        sys.env.get("USERS_SERVICE_ADDRESS").get
-      )
-    )

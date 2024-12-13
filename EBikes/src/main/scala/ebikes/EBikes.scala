@@ -8,15 +8,13 @@ import ebikes.adapters.presentation.HttpPresentationAdapter
 import ebikes.adapters.persistence.EBikesFileSystemRepositoryAdapter
 import akka.actor.typed.ActorSystem
 import akka.http.scaladsl.Http.ServerBinding
-import shared.adapters.MetricsServiceAdapter
 
 object EBikes:
   def run(
       dbDir: File,
       host: String,
       port: Int,
-      eBikesServiceAddress: String,
-      metricsServiceAddress: String
+      eBikesServiceAddress: String
   )(using
       ActorSystem[Any]
   ): Future[ServerBinding] =
@@ -24,11 +22,5 @@ object EBikes:
     val adapter = EBikesFileSystemRepositoryAdapter(db)
     val eBikesService = EBikesServiceImpl(adapter)
 
-    val metricsService = MetricsServiceAdapter(metricsServiceAddress)
-
     HttpPresentationAdapter
-      .startHttpServer(eBikesService, host, port, metricsService)
-      .map(binding =>
-        metricsService.registerForHealthcheckMonitoring(eBikesServiceAddress)
-        binding
-      )(using summon[ActorSystem[Any]].executionContext)
+      .startHttpServer(eBikesService, host, port)

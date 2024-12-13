@@ -39,8 +39,7 @@ class EBikesComponentTests extends AnyFlatSpec with BeforeAndAfterEach:
           tempDir.toJava,
           "localhost",
           0,
-          "localhost:8080",
-          "localhost:8081"
+          "localhost:8080"
         ),
         timeout
       )
