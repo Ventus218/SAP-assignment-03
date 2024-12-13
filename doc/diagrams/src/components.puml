@@ -6,56 +6,30 @@ component "User frontend" as UserFE <<Client>>
 component "Admin frontend" as AdminFE <<Client>>
 
 component Backend <<Server>> {
-    component "API Gateway" <<Microservice>> as APIGateway
 
-    rectangle "Private Network" {
-        component "Metrics" <<Microservice>> as Metrics
-        interface "Metrics API" as MetricsAPI
-        interface "Collect Metrics API" as CollectMetricsAPI
+    component "EBikes" <<Microservice>> as EBikes
+    interface "EBikes API" as EBikesAPI
+    
+    component "Users" <<Microservice>> as Users
+    interface "Users API" as UsersAPI
 
-        component "EBikes" <<Microservice>> as EBikes
-        interface "EBikes API" as EBikesAPI
-        
-        component "Users" <<Microservice>> as Users
-        interface "Users API" as UsersAPI
+    component "Rides" <<Microservice>> as Rides
+    interface "Rides API" as RidesAPI
 
-        component "Rides" <<Microservice>> as Rides
-        interface "Rides API" as RidesAPI
+    EBikes -u-() EBikesAPI
 
-        component "Authentication" <<Microservice>> as AuthService
-        interface "Authentication API" as AuthAPI
-        interface "Users Registration API" as UserRegistrationAPI
+    Users -u-() UsersAPI
 
-        APIGateway --( MetricsAPI
-        APIGateway --( CollectMetricsAPI
-        Metrics -u-() MetricsAPI
-
-        Metrics --() CollectMetricsAPI
-
-        APIGateway --( EBikesAPI
-        EBikes -u-() EBikesAPI
-        EBikes -u-( CollectMetricsAPI
-
-        APIGateway --( UsersAPI
-        Users -u-() UsersAPI
-        Users -u-() UserRegistrationAPI
-        Users -u-( CollectMetricsAPI
-
-        APIGateway --( RidesAPI
-        Rides --u-() RidesAPI
-        Rides --( UsersAPI
-        Rides --( EBikesAPI
-        Rides -l-( CollectMetricsAPI
-
-        APIGateway --( AuthAPI
-        AuthService --u-() AuthAPI
-        AuthService --( UserRegistrationAPI
-        AuthService -r-( CollectMetricsAPI
-    }
+    Rides -u-() RidesAPI
+    Rides -u-( UsersAPI
+    Rides -u-( EBikesAPI
 }
 
-APIGateway -u-() "API Gateway API"
-UserFE --( "API Gateway API"
-AdminFE --( "API Gateway API"
+UserFE --( RidesAPI
+UserFE --( UsersAPI
+UserFE --( EBikesAPI
+AdminFE --( RidesAPI
+AdminFE --( UsersAPI
+AdminFE --( EBikesAPI
 
 @enduml

@@ -34,9 +34,6 @@ RidesService --> EBikesService : "uses"
 class UsersService <<Service>>
 RidesService --> UsersService : "uses"
 
-class MetricsService <<Service>>
-RidesService --> MetricsService : "uses"
-
 interface StartRideError
 
 interface UserOrEBikeAlreadyOnARide extends StartRideError

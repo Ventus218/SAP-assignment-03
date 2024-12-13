@@ -7,13 +7,11 @@ left to right direction
 component "DB"
 interface "Users API" as UsersAPI
 interface "Users Registration API" as UsersRegistrationAPI
-interface "Collect Metrics API" as CollectMetricsAPI
 
 hexagon Adapters {
     hexagon Domain as DomainHex {
         component Domain {
             portout "UsersRepository" as Repo
-            portout MetricsService
             portin UsersService
         }
     }
@@ -22,10 +20,6 @@ hexagon Adapters {
     RepoAdapter -u-|> Repo
     RepoAdapter -l-> DB
 
-    component MetricsAdapter
-    MetricsAdapter -u-|> MetricsService
-    MetricsAdapter -r-( CollectMetricsAPI
-
     component "HTTPPresentationAdapter" as HTTPAdapter
     HTTPAdapter -d-> UsersService
     HTTPAdapter -() UsersAPI
@@ -33,8 +27,5 @@ hexagon Adapters {
     ' just for layout
     UsersAPI -[hidden]-> UsersRegistrationAPI
 }
-
-component "Metrics" as Metrics <<Microservice>>
-Metrics -r-() CollectMetricsAPI
 
 @enduml

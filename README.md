@@ -23,7 +23,6 @@
     + [Validating a JTW token](#validating-a-jtw-token)
     + [Refreshing JWT token](#refreshing-jwt-token)
     + [Force authentication](#force-authentication)
-  * [Metrics microservice](#metrics-microservice)
 - [Deployment](#deployment)
 - [Fault tolerance / recovering](#fault-tolerance--recovering)
 - [Service discovery](#service-discovery)
@@ -87,7 +86,6 @@ docker compose -f ./docker-compose.yml -f ./docker-compose.dev.yml -f ./docker-c
 |system administrator|see which users are currently riding a bike|spot any anomaly if present|
 |system administrator|see all the registered users and their credit|spot any anomaly if present|
 |system administrator|add new bikes to the system|increase the number of bikes in the future|
-|system administrator|be able to monitor metrics of the system (like health status of each component or the amount of request that were served)|spot any anomaly if present|
 
 ### Use cases
 
@@ -122,9 +120,6 @@ docker compose -f ./docker-compose.yml -f ./docker-compose.dev.yml -f ./docker-c
 - Monitor bike positons
     1. The system administrator interface shows a graphical representation of the bike locations on a 2D space
 
-- Monitor system metrics
-    1. The system administrator interface shows for every component if it's running or not and the total amount of served requests
-
 ### Business requirements
 - The credit of the user must be decreased by 1 unit every second
 
@@ -147,7 +142,6 @@ Given the requirements multiple bounded contexts were identified:
 - E-bikes management
 - Rides management
 - User authentication (emerged due to the need of storing users credit)
-- Metrics monitoring
 
 ### Ubiquitous language
 
@@ -164,15 +158,12 @@ Given the requirements multiple bounded contexts were identified:
 |Register new ebike|An action taken by the admin which has the outcome of making the system aware of a new bike which can then be rented|Create new ebike|
 |Monitor ebikes/rides|Admin's capability to check the location of each bike and which users are riding them||
 |Authentication|Process by which the user provides enough data to the system to identify him|Login|
-|Metric|A measurement relative to a specific characteristic|Measurement|
 
 ## Design
 
 The system is designed follwing a microservice architecture where each bounded contexts is mapped to a single microservice or frontend.
 
 ![Components diagram](./doc/diagrams/components.png)
-
-\* The metrics service actually runs an healthcheck on every microservice and therefore it is loosely dependant on them, these dependencies are not shown in the diagram for the sake of simplicity
 
 ### API Gateway
 The API Gateway microservice is the only service exposed to the internet.
@@ -193,7 +184,7 @@ This is by far not a much secure solution but for the purpose of this project it
 
 The EBikes microservice and the Users microservice are both built follwing the hexagonal architecture.
 
-They don't depend on any other microservice (except the Metrics microservice but they can work perfectly even it that's down).
+They don't depend on any other microservice.
 
 ![EBikes microservice components diagram](./doc/diagrams/ebikes-components.png)
 ![EBikes microservice domain model](./doc/diagrams/ebikes-microservice-domain-model.png)
@@ -258,20 +249,6 @@ The `canRenew` flag of the user with the given username will be set to false so 
 > **Note:**
 >
 > This mechanism allow to easily renew tokens while still keeping the possibility of forcing a user to re-authenticate. (For example in case he changes his password or strange behaviors are detected)
-
-### Metrics microservice
-
-The metrics service is responsible for storing metrics data of the whole system.
-
-![Metrics microservice domain model](./doc/diagrams/metrics-service-domain-model.png)
-
-The required metrics are:
-- health status of each microservice
-- total amount of requests served by each microservice
-
-The health status will be tracked by polling each service at a fixed interval (Pull strategy)
-
-The amount of requests will be reported by every microservice to the Metrics service (Push strategy)
 
 ## Deployment
 Each microservice will be deployed as a standalone Docker container while the two frontends will be deployed as standard GUI apps.
