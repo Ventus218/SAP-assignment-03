@@ -1,0 +1,62 @@
+@startuml metrics-service-domain-model
+
+class MetricsService <<Service>> {
+    incrementCounter(counterId: CounterId, amount: Long): Unit
+    valueOfCounter(counterId: CounterId, atTimestamp: Long): Long
+    counters(atTimestamp: Long): Map<CounterId, Long>
+    startMonitorEndpoint(endpoint: Endpoint): Unit
+    stopMonitorEndpoint(endpoint: Endpoint): Either<MonitoredEndpointNotFound, Unit>
+    def monitoredEndpoints(): Iterable<MonitoredEndpoint>
+    monitoredEndpointStatus(endpoint: Endpoint): Either<MonitoredEndpointNotFound, MonitoredEndpointStatus>
+}
+
+struct CounterId {
+    value: String
+}
+
+struct EventId {
+    value: String
+}
+
+struct IncrementCounterEvent <<Event>> {
+    --
+    timestamp: Long
+    incrementAmount: Long
+}
+
+IncrementCounterEvent "0..*" -- "1" CounterId
+IncrementCounterEvent "1" -- "1 id" EventId
+
+class IncrementCounterEventsRepository <<Repository>>
+IncrementCounterEventsRepository o-- IncrementCounterEvent
+MetricsService --> IncrementCounterEventsRepository : "uses"
+
+note left of IncrementCounterEvent
+    Counters are
+    Event Sourced
+end note
+
+
+struct Endpoint {
+    value: URI
+}
+
+struct MonitoredEndpoint {
+    status: MonitoredEndpointStatus
+}
+MonitoredEndpoint "0..*" -- "1 endpoint" Endpoint
+
+enum MonitoredEndpointStatus {
+    Up
+    Down
+    Unknown
+}
+MonitoredEndpoint "0..*" -- "1 status" MonitoredEndpointStatus
+
+class MonitoredEndpointRepository <<Repository>>
+MonitoredEndpointRepository o--  MonitoredEndpoint
+MetricsService --> MonitoredEndpointRepository : "uses"
+
+hide empty members
+
+@enduml

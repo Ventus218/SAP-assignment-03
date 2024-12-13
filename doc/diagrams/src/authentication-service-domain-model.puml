@@ -1,0 +1,32 @@
+@startuml authentication-service-domain-model
+
+struct AuthInfo {
+    username: Username
+    passwordHash: String
+    canRenew: Boolean
+}
+
+class AuthInfoRepository <<Repository>>
+AuthInfoRepository o-l- AuthInfo
+
+class AuthenticationService <<Service>> {
+    register(username: Username, password: String): String
+    authenticate(username: Username, password: String): String
+    refresh(token: String): String
+    validate(token: String): Username
+    forceAuthentication(token: String, username: Username): Void
+    ..
+    healthCheckError(): Option<String>
+}
+
+AuthenticationService --> AuthInfoRepository : "uses"
+
+class UsersService <<Service>>
+AuthenticationService --> UsersService : "uses"
+
+class MetricsService <<Service>>
+AuthenticationService --> MetricsService : "uses"
+
+hide empty members
+
+@enduml

@@ -1,0 +1,192 @@
+openapi: 3.0.3
+info:
+  title: eBikes Service API
+  version: 1.0.0
+  description: API for managing eBike data and performing health checks.
+paths:
+  /ebikes:
+    get:
+      description: Retrieve a list of all registered eBikes.
+      responses:
+        '200':
+          description: A list of registered eBikes.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EBike'
+
+    post:
+      description: Register a new eBike.
+      requestBody:
+        description: Data required to register an eBike.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterEBikeDTO'
+      responses:
+        '200':
+          description: The eBike was successfully registered.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EBike'
+        '409':
+          description: eBike ID already in use.
+          content:
+            text/plain:
+              schema:
+                type: string
+
+  /ebikes/{eBikeId}:
+    get:
+      description: Retrieve details of a specific eBike by its ID.
+      parameters:
+        - name: eBikeId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: The unique identifier of the eBike.
+      responses:
+        '200':
+          description: Details of the specified eBike.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EBike'
+        '404':
+          description: eBike not found.
+          content:
+            text/plain:
+              schema:
+                type: string
+
+    patch:
+      description: Update physical data of a specific eBike.
+      parameters:
+        - name: eBikeId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: The unique identifier of the eBike.
+      requestBody:
+        description: Data required to update eBike physical data.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateEBikePhisicalDataDTO'
+      responses:
+        '200':
+          description: The eBike's physical data was successfully updated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EBike'
+        '404':
+          description: eBike not found.
+          content:
+            text/plain:
+              schema:
+                type: string
+
+  /healthCheck:
+    get:
+      description: Perform a health check to verify the service is operational.
+      responses:
+        '200':
+          description: The service is healthy.
+          content:
+            text/plain:
+              schema:
+                type: string
+        '503':
+          description: Service unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthCheckError'
+
+components:
+  schemas:
+    V2D:
+      type: object
+      description: Represents a 2D vector (location or direction).
+      properties:
+        x:
+          type: number
+          description: The x-coordinate.
+        y:
+          type: number
+          description: The y-coordinate.
+      required:
+        - x
+        - y
+
+    EBikeId:
+      type: object
+      description: Represents an eBike's unique identifier.
+      properties:
+        value:
+          type: string
+          description: The unique identifier of the eBike.
+      required:
+        - value
+
+    EBike:
+      type: object
+      description: Represents an eBike and its associated data.
+      properties:
+        id:
+          $ref: '#/components/schemas/EBikeId'
+        location:
+          $ref: '#/components/schemas/V2D'
+        direction:
+          $ref: '#/components/schemas/V2D'
+        speed:
+          type: number
+          description: The current speed of the eBike.
+      required:
+        - id
+        - location
+        - direction
+        - speed
+
+    RegisterEBikeDTO:
+      type: object
+      description: Data transfer object for registering an eBike.
+      properties:
+        id:
+          $ref: '#/components/schemas/EBikeId'
+        location:
+          $ref: '#/components/schemas/V2D'
+        direction:
+          $ref: '#/components/schemas/V2D'
+      required:
+        - id
+        - location
+        - direction
+
+    UpdateEBikePhisicalDataDTO:
+      type: object
+      description: Data transfer object for updating an eBike's physical data.
+      properties:
+        location:
+          $ref: '#/components/schemas/V2D'
+        direction:
+          $ref: '#/components/schemas/V2D'
+        speed:
+          type: number
+          description: The updated speed of the eBike.
+
+    HealthCheckError:
+      type: object
+      description: Represents an error encountered during a health check.
+      properties:
+        error:
+          type: string
+          description: A description of the health check error.
+      required:
+        - error

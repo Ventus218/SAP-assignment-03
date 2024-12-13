@@ -1,0 +1,34 @@
+@startuml ebikes-microservice-domain-model
+
+title EBikes microservice domain model
+
+class EBike {
+    location: V2D
+    direction: V2d
+    speed: Double
+}
+struct EBikeId {
+    value: String
+}
+EBike "1" -u-> "id 1" EBikeId
+
+class EBikesRepository <<Repository>>
+EBikesRepository o-l- EBike
+
+class EBikesService <<Service>> {
+    find(eBikeId: EBikeId): EBike?
+    eBikes(): Iterable<EBike>
+    register(eBikeId: EBikeId, location: V2D, direction: V2D): Either<EBikeIdAlreadyInUse, EBike>
+    updatePhisicalData(eBikeId: EBikeId, location: V2D, direction: V2D, speed: Double): EBike?
+    ..
+    healthCheckError(): Option<String>
+}
+
+EBikesService --> EBikesRepository : "uses"
+
+class MetricsService <<Service>>
+EBikesService --> MetricsService : "uses"
+
+hide empty members
+
+@enduml

@@ -1,0 +1,154 @@
+openapi: 3.0.3
+info:
+  title: Users Service API
+  version: 1.0.0
+  description: API for managing users and performing health checks.
+paths:
+  /users:
+    get:
+      description: Retrieve a list of all registered users.
+      responses:
+        '200':
+          description: A list of registered users.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+
+    post:
+      description: Register a new user.
+      requestBody:
+        description: The username of the user to register.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Username'
+      responses:
+        '200':
+          description: The user was successfully registered.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '409':
+          description: Username already in use.
+          content:
+            text/plain:
+              schema:
+                type: string
+
+  /users/{username}/credit:
+    get:
+      description: Check the credit balance of a specific user.
+      parameters:
+        - name: username
+          in: path
+          required: true
+          schema:
+            type: string
+          description: The username of the user.
+      responses:
+        '200':
+          description: The user's current credit balance.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Credit'
+        '404':
+          description: User not found.
+          content:
+            text/plain:
+              schema:
+                type: string
+
+    post:
+      description: Recharge the credit balance of a specific user.
+      parameters:
+        - name: username
+          in: path
+          required: true
+          schema:
+            type: string
+          description: The username of the user.
+      requestBody:
+        description: The credit amount to recharge.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Credit'
+      responses:
+        '200':
+          description: The user's credit balance was successfully updated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Credit'
+        '404':
+          description: User not found.
+          content:
+            text/plain:
+              schema:
+                type: string
+
+  /healthCheck:
+    get:
+      description: Perform a health check to verify the service is operational.
+      responses:
+        '200':
+          description: The service is healthy.
+          content:
+            text/plain:
+              schema:
+                type: string
+        '503':
+          description: Service unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthCheckError'
+
+components:
+  schemas:
+    Username:
+      type: object
+      description: Represents a user's username.
+      properties:
+        value:
+          type: string
+          description: The username of the user.
+      required:
+        - value
+
+    Credit:
+      type: object
+      description: Represents a user's credit balance.
+      properties:
+        amount:
+          type: number
+          description: The amount of credit.
+      required:
+        - amount
+
+    User:
+      type: object
+      description: Represents a user and their associated data.
+      properties:
+        username:
+          $ref: '#/components/schemas/Username'
+        credit:
+          $ref: '#/components/schemas/Credit'
+      required:
+        - username
+        - credit
+
+    HealthCheckError:
+      type: object
+      description: Represents an error encountered during a health check.
+      properties:
+        error:
+          type: string
+          description: A description of the health check error.
+      required:
+        - error

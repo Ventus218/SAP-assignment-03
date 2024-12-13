@@ -1,0 +1,20 @@
+@startuml use-cases
+
+actor "User"
+actor "System Administrator" as Admin
+
+left to right direction
+
+rectangle "EBike App" {
+    User --> (Go on a ride)
+    User --> (Recharge credit)
+    User --> (Check credit)
+
+    Admin -u-> (Monitor bike positions)
+    Admin -u-> (Monitor rides)
+    Admin -u-> (See registered users\n and their credit)
+    Admin -u-> (Register new bike)
+    Admin -u-> (Monitor system metrics)
+}
+
+@enduml

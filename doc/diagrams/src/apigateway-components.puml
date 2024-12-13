@@ -1,0 +1,54 @@
+@startuml apigateway-components
+
+title "API Gateway microservice"
+
+left to right direction
+
+interface "Users API" as UsersAPI
+interface "EBikes API" as EBikesAPI
+interface "Rides API" as RidesAPI
+interface "Authentication API" as AuthAPI
+interface "API Gateway API" as APIGatewayAPI
+interface "Collect Metrics API" as CollectMetricsAPI
+interface "Metrics API" as MetricsAPI
+
+hexagon Adapters {
+    hexagon Domain as DomainHex {
+        component Domain {
+            portin MetricsService
+            portin AuthenticationService
+            portin ApiGatewayService
+            portout UsersService
+            portout EBikesService
+            portout RidesService
+        }
+    }
+
+    component "Authentication Adapter" as AuthAdapter
+    AuthAdapter -d-|> AuthenticationService
+    AuthAdapter -u-( AuthAPI
+
+    component MetricsAdapter
+    MetricsAdapter -d-|> MetricsService
+    MetricsAdapter -u-( CollectMetricsAPI
+    MetricsAdapter -u-( MetricsAPI
+
+    component "HTTPPresentationAdapter" as HTTPAdapter
+    HTTPAdapter -d-> ApiGatewayService
+    HTTPAdapter -u-() APIGatewayAPI
+    
+    component "Users Adapter" as UsersAdapter
+    UsersAdapter -u-|> UsersService
+    UsersAdapter --( UsersAPI
+
+    component "EBikes Adapter" as EBikesAdapter
+    EBikesAdapter -u-|> EBikesService
+    EBikesAdapter --( EBikesAPI
+
+    component "Rides Adapter" as RidesAdapter
+    RidesAdapter -u-|> RidesService
+    RidesAdapter --( RidesAPI
+
+}
+
+@enduml

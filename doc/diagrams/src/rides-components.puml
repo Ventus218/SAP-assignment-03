@@ -1,0 +1,55 @@
+@startuml rides-components
+
+title "Rides microservice"
+
+left to right direction
+
+component "DB"
+interface "Rides API" as RidesAPI
+interface "EBikes API" as EBikesAPI
+interface "Users API" as UsersAPI
+interface "Collect Metrics API" as CollectMetricsAPI
+
+hexagon Adapters {
+    hexagon Domain as DomainHex {
+        component Domain {
+            'ports in or out are just used for layout purposes and do not have any semantic'
+            portin UsersService
+            portin RidesService
+            portout "RidesRepository" as Repo
+            portout MetricsService
+            portout EBikesService
+        }
+    }
+
+    component "RepositoryAdapter" as RepoAdapter
+    RepoAdapter -l-> DB
+    RepoAdapter -u-|> Repo
+
+    component MetricsAdapter
+    MetricsAdapter -u-|> MetricsService
+    MetricsAdapter --( CollectMetricsAPI
+
+    component EBikesAdapter
+    EBikesAdapter -r-( EBikesAPI
+    EBikesAdapter -u-|> EBikesService
+
+    component "HTTPPresentationAdapter" as HTTPAdapter
+    HTTPAdapter -l-() RidesAPI
+    HTTPAdapter -d-> RidesService
+
+    component UsersAdapter
+    UsersAdapter -r-( UsersAPI
+    UsersAdapter -d-|> UsersService
+}
+
+component "EBikes" as EBikes <<Microservice>>
+EBikes -r-() EBikesAPI
+
+component "Users" as Users <<Microservice>>
+Users -r-() UsersAPI
+
+component "Metrics" as Metrics <<Microservice>>
+Metrics -r-() CollectMetricsAPI
+
+@enduml

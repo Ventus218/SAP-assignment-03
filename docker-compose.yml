@@ -1,0 +1,49 @@
+x-common_environment: &common_environment
+  EBIKES_SERVICE_ADDRESS: ebikes:8080
+  USERS_SERVICE_ADDRESS: users:8080
+  RIDES_SERVICE_ADDRESS: rides:8080
+
+x-common_healthcheck: &common_healthcheck
+  healthcheck:
+    test: curl --fail localhost:8080/healthCheck || exit 1
+    start_period: 20s
+    start_interval: 1s
+    interval: 60s
+    timeout: 5s
+    retries: 2
+  restart: unless-stopped
+  
+services:
+  ebikes:
+    build:
+      args:
+        - executable=EBikes/executable.jar
+    networks:
+      - private_network
+    environment:
+      <<: *common_environment
+    <<: *common_healthcheck
+
+  users:
+    build:
+      args:
+        - executable=Users/executable.jar
+    networks:
+      - private_network
+    environment:
+      <<: *common_environment
+    <<: *common_healthcheck
+
+  rides:
+    build:
+      args:
+        - executable=Rides/executable.jar
+    networks:
+      - private_network
+    environment:
+      <<: *common_environment
+    <<: *common_healthcheck
+
+networks:
+  private_network:
+    driver: bridge

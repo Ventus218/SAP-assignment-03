@@ -1,0 +1,156 @@
+openapi: 3.0.3
+info:
+  title: Rides Service API
+  version: 1.0.0
+  description: API for managing eBike rides and performing health checks.
+paths:
+  /rides/active:
+    get:
+      description: Retrieve a list of all active rides.
+      responses:
+        '200':
+          description: A list of active rides.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Ride'
+
+  /rides/availableEBikes:
+    get:
+      description: Retrieve a list of all available eBikes.
+      responses:
+        '200':
+          description: A list of available eBikes.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EBikeId'
+
+  /rides:
+    post:
+      description: Start a new ride with a specified eBike and user.
+      requestBody:
+        description: Data required to start a new ride.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StartRideDTO'
+      responses:
+        '200':
+          description: The ride was successfully started.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ride'
+
+  /rides/{rideId}:
+    get:
+      description: Retrieve details of a specific ride by its ID.
+      parameters:
+        - name: rideId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: The unique identifier of the ride.
+      responses:
+        '200':
+          description: Details of the specified ride.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ride'
+
+    put:
+      description: End a specific ride by its ID.
+      parameters:
+        - name: rideId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: The unique identifier of the ride.
+      responses:
+        '200':
+          description: The ride was successfully ended.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ride'
+
+  /healthCheck:
+    get:
+      description: Perform a health check to verify the service is operational.
+      responses:
+        '200':
+          description: The service is healthy.
+          content:
+            text/plain:
+              schema:
+                type: string
+
+components:
+  schemas:
+    Date:
+      type: number
+      description: A timestamp in milliseconds from epoch
+    Username:
+      type: object
+      properties:
+        value:
+          type: string
+      required:
+        - value
+    EBikeId:
+      type: object
+      properties:
+        value:
+          type: string
+      required:
+        - value
+    RideId:
+      type: object
+      properties:
+        value:
+          type: string
+      required:
+        - value
+    Ride:
+      type: object
+      properties:
+        id:
+          $ref: '#/components/schemas/RideId'
+        eBikeId:
+          $ref: '#/components/schemas/EBikeId'
+        username:
+          $ref: '#/components/schemas/Username'
+        startTime:
+          $ref: '#/components/schemas/Date'
+        endTime:
+          $ref: '#/components/schemas/Date'
+      required:
+        - id
+        - eBikeId
+        - username
+        - startTime
+    StartRideDTO:
+      type: object
+      properties:
+        eBikeId:
+          $ref: '#/components/schemas/EBikeId'
+        username:
+          $ref: '#/components/schemas/Username'
+      required:
+        - eBikeId
+        - username
+    HealthCheckError:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error
