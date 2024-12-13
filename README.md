@@ -12,8 +12,6 @@
   * [Bounded contexts](#bounded-contexts)
   * [Ubiquitous language](#ubiquitous-language)
 - [Design](#design)
-  * [API Gateway](#api-gateway)
-    + [A choice regarding security](#a-choice-regarding-security)
   * [EBikes and Users microservices](#ebikes-and-users-microservices)
   * [Rides microservice](#rides-microservice)
   * [Authentication microservice](#authentication-microservice)
@@ -165,21 +163,6 @@ The system is designed follwing a microservice architecture where each bounded c
 
 ![Components diagram](./doc/diagrams/components.png)
 
-### API Gateway
-The API Gateway microservice is the only service exposed to the internet.
-
-It has the responsibility to relay the client requests to the appropriate services.
-
-![APIGateway microservice components diagram](./doc/diagrams/apigateway-components.png)
-![APIGateway microservice domain model](./doc/diagrams/apigateway-microservice-domain-model.png)
-
-#### A choice regarding security
-Given the fact that the API Gateway is the only exposed access point it will be resposible for validating (through the Authentication microservice) every request before relaying it.
-
-This allows to keep the token validation logic centralized letting every other microservice assume that the requests they receive are authenticated.
-
-This is by far not a much secure solution but for the purpose of this project it allows to reduce overall complexity.
-
 ### EBikes and Users microservices
 
 The EBikes microservice and the Users microservice are both built follwing the hexagonal architecture.
@@ -285,7 +268,6 @@ It is required to provide at least one test for each layer in the testing pyrami
 Due to time constraints the system lacks these features:
 - Differentiation between users and admins
 - Proper authorization checks
-- Incomplete API gateway (it only relays to EBikes and Authentication microservices)
 - The user credit is not decreased when riding
 - The GUI is really ugly
 - The admin interface is missing the ability to register a new bike

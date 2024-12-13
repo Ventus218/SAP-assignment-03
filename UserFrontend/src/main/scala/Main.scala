@@ -133,7 +133,7 @@ object SwingApp extends SimpleSwingApplication {
         res <- quickRequest
           .get(
             uri"http://localhost:8082/users/${username.value}/credit"
-          ) // TODO: move to api gateway
+          )
           .authorizationBearer(authToken.get)
           .sendAsync()
         credit =
@@ -154,7 +154,7 @@ object SwingApp extends SimpleSwingApplication {
         res <- quickRequest
           .post(
             uri"http://localhost:8082/users/${username.value}/credit"
-          ) // TODO: move to api gateway
+          )
           .jsonBody(Credit(amount))
           .authorizationBearer(authToken.get)
           .sendAsync()
@@ -174,7 +174,7 @@ object SwingApp extends SimpleSwingApplication {
         res <- quickRequest
           .get(
             uri"http://localhost:8083/rides/availableEBikes"
-          ) // TODO: move to api gateway
+          )
           .authorizationBearer(authToken.get)
           .sendAsync()
         eBikes =
@@ -193,7 +193,7 @@ object SwingApp extends SimpleSwingApplication {
         res <- quickRequest
           .post(
             uri"http://localhost:8083/rides"
-          ) // TODO: move to api gateway
+          )
           .jsonBody(StartRideDTO(eBikeId, username))
           .authorizationBearer(authToken.get)
           .sendAsync()
@@ -216,7 +216,7 @@ object SwingApp extends SimpleSwingApplication {
             res <- quickRequest
               .put(
                 uri"http://localhost:8083/rides/${ride.id.value}"
-              ) // TODO: move to api gateway
+              )
               .authorizationBearer(authToken.get)
               .sendAsync()
             result =

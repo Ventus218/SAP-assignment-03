@@ -89,7 +89,7 @@ object SwingApp extends SimpleSwingApplication {
         res <- quickRequest
           .get(
             uri"http://localhost:8082/users"
-          ) // TODO: move to api gateway
+          )
           .authorizationBearer(authToken.get)
           .sendAsync()
         users =
@@ -106,7 +106,7 @@ object SwingApp extends SimpleSwingApplication {
     private def fetchEBikes(): Future[Either[String, Seq[EBike]]] =
       for
         res <- quickRequest
-          .get(uri"http://localhost:8080/ebikes")
+          .get(uri"http://localhost:8081/ebikes")
           .authorizationBearer(authToken.get)
           .sendAsync()
         eBikes =
