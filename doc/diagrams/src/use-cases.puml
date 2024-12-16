@@ -7,12 +7,10 @@ left to right direction
 
 rectangle "EBike App" {
     User --> (Go on a ride)
-    User --> (Recharge credit)
-    User --> (Check credit)
 
     Admin -u-> (Monitor bike positions)
     Admin -u-> (Monitor rides)
-    Admin -u-> (See registered users\n and their credit)
+    Admin -u-> (See registered users)
     Admin -u-> (Register new bike)
 }
 

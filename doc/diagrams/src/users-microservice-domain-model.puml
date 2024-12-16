@@ -9,18 +9,11 @@ struct Username {
 }
 User "1" -u-> "id 1" Username
 
-struct Credit {
-    amount: Int
-}
-User "1" -u-> "credit 1" Credit
-
 class UsersRepository <<Repository>>
 UsersRepository o-l- User
 
 class UsersService <<Service>> {
     registerUser(username: Username): Either<UsernameAlreadyInUse, User>
-    checkCredit(username: Username): Either<UserNotFound, Credit>
-    rechargeCredit(username: Username, rechargeAmount: Credit): Either<UserNotFound, Credit>
     users(): Iterable<User>
     ..
     healthCheckError(): Option<String>

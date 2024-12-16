@@ -17,8 +17,7 @@ import users.domain.UsersService
 object HttpPresentationAdapter:
 
   given RootJsonFormat[Username] = jsonFormat1(Username.apply)
-  given RootJsonFormat[Credit] = jsonFormat1(Credit.apply)
-  given RootJsonFormat[User] = jsonFormat2(User.apply)
+  given RootJsonFormat[User] = jsonFormat1(User.apply)
   given RootJsonFormat[HealthCheckError] = jsonFormat1(HealthCheckError.apply)
 
   def startHttpServer(
@@ -40,23 +39,6 @@ object HttpPresentationAdapter:
                     complete(Conflict, "Username already in use")
                   case Right(value) => complete(value)
               }
-            ,
-            pathPrefix(Segment / "credit"): username =>
-              concat(
-                (get & pathEnd):
-                  usersService.checkCredit(Username(username)) match
-                    case Left(value)  => complete(NotFound, "User not found")
-                    case Right(value) => complete(value)
-                ,
-                (post & pathEnd):
-                  entity(as[Credit]) { credit =>
-                    usersService
-                      .rechargeCredit(Username(username), credit) match
-                      case Left(value)  => complete(NotFound, "User not found")
-                      case Right(value) => complete(value)
-
-                  }
-              )
           )
         ,
         path("healthCheck"):

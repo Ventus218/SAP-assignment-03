@@ -9,7 +9,6 @@ import upickle.default.*
 class UsersFileSystemRepositoryAdapter(db: FileSystemDatabase)
     extends UsersRepository:
 
-  given ReadWriter[Credit] = ReadWriter.derived
   given ReadWriter[Username] = ReadWriter.derived
   given ReadWriter[User] = ReadWriter.derived
 
