@@ -69,10 +69,15 @@ docker compose -f ./docker-compose.yml -f ./docker-compose.dev.yml -f ./docker-c
 |As a|I want|so that|
 |----|----------|-------------|
 |user|to go on a ride with a rented bike|I can leave it wherever i want|
+|business stakeholder|the bikes to autonomously go to the user when requested|provide a fantastic service to my customers|
+|business stakeholder|the bikes to autonomously go back to the charging station|save money with respect to paying someone to do that|
 |system administrator|to see the current location of every bike|I can check if was left too far|
 |system administrator|to see which users are currently riding a bike|I can spot any anomaly if present|
 |system administrator|to see all the registered users|I can spot any anomaly if present|
 |system administrator|to add new bikes to the system|I can increase the number of bikes in the future|
+
+### Business requirements
+Autonomous bikes must follow the traffic laws (stopping at red traffic lights)
 
 ### Use cases
 
@@ -82,8 +87,10 @@ docker compose -f ./docker-compose.yml -f ./docker-compose.dev.yml -f ./docker-c
 
 - Go on a ride:
     1. The user chooses an available bike and selects "Start ride"
-    1. The user can see his credits updating while he's riding
+    1. The bike detaches from the charging station and rides up to the user
+    1. The users rides the bike
     1. The user selects "End ride"
+    1. The bike autonomously rides back to the charging station
 
 - Add new bike:
     1. The system administrator chooses an id for the new bike and confirms
@@ -109,6 +116,7 @@ Given the requirements multiple bounded contexts were identified:
 - Users management
 - E-bikes management
 - Rides management
+- Autonomous city riding
 
 ### Ubiquitous language
 
@@ -119,6 +127,11 @@ Given the requirements multiple bounded contexts were identified:
 |Admin|An employee of the organization whose responsibility is to monitor the system and to take actions to let the system work as expected|System administrator|
 |E-bike|An electric bike which can be rented by the users|Ebike, bike|
 |E-bike location|The geographical location of the bike|E-bike position|
+|Charging station|A phisical place in the city where ebikes can charge their batteries||
+|Traffic light|An indicator on a street junction that indicates whether the traffic should stop or proceed|Semaphore|
+|Traffic light state|A traffic light can be Red (stop) or Green (pass)|Light|
+|Junction|A place where multiple streets meet||
+|Street|A rideable road segment between two street junctions|Road|
 |Ride|The rental of a bike from a user which aims to use it to move from one place to another||
 |Register new ebike|An action taken by the admin which has the outcome of making the system aware of a new bike which can then be rented|Create new ebike|
 |Monitor ebikes/rides|Admin's capability to check the location of each bike and which users are riding them||
