@@ -10,27 +10,16 @@ v0.9.0-20241209
   * [Use cases](#use-cases)
     + [Scenarios](#scenarios)
   * [Business requirements](#business-requirements)
-  * [Quality attribute scenarios](#quality-attribute-scenarios)
 - [Analisys](#analisys)
   * [Bounded contexts](#bounded-contexts)
   * [Ubiquitous language](#ubiquitous-language)
 - [Design](#design)
   * [EBikes and Users microservices](#ebikes-and-users-microservices)
   * [Rides microservice](#rides-microservice)
-  * [Authentication microservice](#authentication-microservice)
-    + [Bounded context language](#bounded-context-language)
-    + [Register new user](#register-new-user)
-    + [Authenticate existing user](#authenticate-existing-user)
-    + [Validating a JTW token](#validating-a-jtw-token)
-    + [Refreshing JWT token](#refreshing-jwt-token)
-    + [Force authentication](#force-authentication)
 - [Deployment](#deployment)
 - [Fault tolerance / recovering](#fault-tolerance--recovering)
 - [Service discovery](#service-discovery)
 - [Configuration](#configuration)
-- [Testing](#testing)
-- [Issues](#issues)
-  * [Incompleteness](#incompleteness)
 
 <!-- tocstop -->
 
@@ -123,14 +112,6 @@ docker compose -f ./docker-compose.yml -f ./docker-compose.dev.yml -f ./docker-c
 ### Business requirements
 - The credit of the user must be decreased by 1 unit every second
 
-### Quality attribute scenarios
-
-|Quality attribute|Source|Stimulus|Artifact|Environment|Response|Response measure|
-|------------|------------|------------|------------|------------|------------|------------|
-|Availablilty|User/Admin|Interacts with the system causing a component crash|System component|Normal conditions|The component is restarted|in 10 seconds|
-Observability|User/Admin|Sends a request|System|Normal conditions|Keeps a request counter|An updated requests counter is somehow exposed|
-Observability|User/Admin|Interacts with the system causing a component crash|System component|Normal conditions|Tracks the current state of the crashed component|Updated information about the component state are somehow exposed|
-
 ## Analisys
 
 ### Bounded contexts
@@ -141,7 +122,6 @@ Given the requirements multiple bounded contexts were identified:
 - Users management
 - E-bikes management
 - Rides management
-- User authentication (emerged due to the need of storing users credit)
 
 ### Ubiquitous language
 
@@ -157,7 +137,6 @@ Given the requirements multiple bounded contexts were identified:
 |Recharge credit|Process executed by the user by which his credit is increased by the requested amount||
 |Register new ebike|An action taken by the admin which has the outcome of making the system aware of a new bike which can then be rented|Create new ebike|
 |Monitor ebikes/rides|Admin's capability to check the location of each bike and which users are riding them||
-|Authentication|Process by which the user provides enough data to the system to identify him|Login|
 
 ## Design
 
@@ -186,55 +165,6 @@ It depends on both the other microservices (EBikes and Users).
 ![Rides microservice components diagram](./doc/diagrams/rides-components.png)
 ![Rides microservice domain model](./doc/diagrams/rides-microservice-domain-model.png)
 
-### Authentication microservice
-
-The Authentication service is responsible for every aspect regarding user authentication.
-
-In fact the user password is not stored in the [user microservice](#ebikes-and-users-microservices) but it's stored in this one.
-
-![Authentication microservice domain model](./doc/diagrams/authentication-service-domain-model.png)
-
-#### Bounded context language
-|Word|Definition|Synonyms|
-|----|----------|--------|
-|Password|The user's secret string that lets him authenticate himself||
-|PasswordHash|An hashed password, it allows to not store passwords in clear text format||
-|JWT|A token signed by the system that authenticates a user|JSON Web Token|
-|AuthInfo|A data structure that holds the user's passwordHash and a flag regarding automatic token renewal||
-
-Operations offered by this service are handled in this way:
-
-#### Register new user
-Registering a new user is the most complex operation as it requires interaction with the Users microservice.
-
-The service:
-1. will check that a user with that username does not already exist.
-1. will send a request of registering a user to the Users service
-1. if the operation succedes then will proceed by inserting a new AuthInfo into its AuthInfoRepository.
-1. will issue and return a JWT token
-
-In case of failure of the operation after successfully completing point 2 the system may be in an unconsistent state (a user has been created but has no AuthInfo).
-
-To achieve eventual consistency this edge case is handled as it follows:
-1. Once the service will try to create the (same) user (point 2) it will receive an error saying that the user is already registered but since it was already checked that no AuthInfo existed then the service will proceed like no error has happened.
-
-#### Authenticate existing user
-Given a username and password the service checks if they're valid and if so it issues a JWT with relatively short expiration time (like 15 minutes).
-Also ensures that the `canRenew` flag is set to true.
-
-#### Validating a JTW token
-Given a JWT token the service verify it has a valid signature and that it's not expired.
-
-#### Refreshing JWT token
-Given a non-expired token the service will issue a new one only if the `canRenew` flag of the relative AuthInfo is set to true.
-
-#### Force authentication
-The `canRenew` flag of the user with the given username will be set to false so that it cannot renew his tokens until he authenticates again.
-
-> **Note:**
->
-> This mechanism allow to easily renew tokens while still keeping the possibility of forcing a user to re-authenticate. (For example in case he changes his password or strange behaviors are detected)
-
 ## Deployment
 Each microservice will be deployed as a standalone Docker container while the two frontends will be deployed as standard GUI apps.
 
@@ -252,43 +182,3 @@ Given these requirements the built-in DNS service provided by Docker can be expl
 
 ## Configuration
 Since the microservices configuration does not need to be changed at runtime the simplest way to provide an externalized configuration is through enviornment variables that will be passed at deploy-time.
-
-## Testing
-It is required to provide at least one test for each layer in the testing pyramid
-
-<!-- TODO: add example tests references -->
-|Test type  |Amount     |Complexity |Examples   |
-|-----------|-----------|-----------|-----------|
-|End-to-end |Low        |Very high  |End to end [tests](./postman-tests.json) were made manually through Postman|
-|Component  |Medium     |High       |[EBikesComponentTests](./EBikes/src/test/scala/ebikes/EBikesComponentTests.scala)|
-|Integration|High       |Medium     |[EBikesFileSystemRepositoryAdapterTests](./EBikes/src/test/scala/ebikes/adapters/persistence/EBikesFileSystemRepositoryAdapterTests.scala), [HttpPresentationAdapterTests](./EBikes/src/test/scala/ebikes/adapters/presentation/HttpPresentationAdapterTests.scala)|
-|Unit       |Very high  |Low        |[EBikesServiceTests](./EBikes/src/test/scala/ebikes/domain/EBikesServiceTests.scala), [V2DTests](./EBikes/src/test/scala/ebikes/domain/model/V2DTests.scala)|
-
-## Issues
-
-### Incompleteness
-Due to time constraints the system lacks these features:
-- Differentiation between users and admins
-- Proper authorization checks
-- The user credit is not decreased when riding
-- The GUI is really ugly
-- The admin interface is missing the ability to register a new bike
-  
-  In order to register a bike to test the system you can run
-  ```sh
-  curl --location 'localhost:8081/ebikes' \
-  --header 'Content-Type: application/json' \
-  --data '{
-      "id": {
-          "value": "bike1"
-      },
-      "location": {
-          "x": 0,
-          "y": 0
-      },
-      "direction": {
-          "x": 0,
-          "y": 0
-      }
-  }'
-  ```
