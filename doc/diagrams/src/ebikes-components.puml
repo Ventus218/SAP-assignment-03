@@ -4,20 +4,20 @@ title "EBikes microservice"
 
 left to right direction
 
-component "DB"
+component EventStore
 interface "EBikes API" as EBikesAPI
 
 hexagon Adapters {
     hexagon Domain as DomainHex {
         component Domain {
-            portout "EBikesRepository" as Repo
+            portout EBikesEventStore
             portin EBikesService
         }
     }
 
-    component "Repository Adapter" as RepoAdapter
-    RepoAdapter -u-|> Repo
-    RepoAdapter -l-> DB
+    component "EventStoreAdapter" as EventStoreAdapter
+    EventStoreAdapter -u-|> EBikesEventStore
+    EventStoreAdapter -l-> EventStore
 
     component "HTTPPresentationAdapter" as HTTPAdapter
     HTTPAdapter -d-> EBikesService

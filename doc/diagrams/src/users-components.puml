@@ -4,28 +4,24 @@ title "Users microservice"
 
 left to right direction
 
-component "DB"
+component "EventStore"
 interface "Users API" as UsersAPI
-interface "Users Registration API" as UsersRegistrationAPI
 
 hexagon Adapters {
     hexagon Domain as DomainHex {
         component Domain {
-            portout "UsersRepository" as Repo
+            portout UsersEventStore
             portin UsersService
         }
     }
 
-    component "Repository Adapter" as RepoAdapter
-    RepoAdapter -u-|> Repo
-    RepoAdapter -l-> DB
+    component "EventStoreAdapter" as EventStoreAdapter
+    EventStoreAdapter -u-|> UsersEventStore
+    EventStoreAdapter -l-> EventStore
 
     component "HTTPPresentationAdapter" as HTTPAdapter
     HTTPAdapter -d-> UsersService
-    HTTPAdapter -() UsersAPI
-    HTTPAdapter -() UsersRegistrationAPI
-    ' just for layout
-    UsersAPI -[hidden]-> UsersRegistrationAPI
+    HTTPAdapter -l-() UsersAPI
 }
 
 @enduml

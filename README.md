@@ -143,17 +143,19 @@ The system is designed follwing an event-driven microservices architecture where
 
 ![Components diagram](./doc/diagrams/components.png)
 
-### EBikes and Users microservices
+### Users microservice
 
-The EBikes microservice and the Users microservice are both built follwing the hexagonal architecture.
-
-They don't depend on any other microservice.
-
-![EBikes microservice components diagram](./doc/diagrams/ebikes-components.png)
-![EBikes microservice domain model](./doc/diagrams/ebikes-microservice-domain-model.png)
+The Users microservice don't depend on any other microservice and is responsible for managing registered user data.
 
 ![Users microservice components diagram](./doc/diagrams/users-components.png)
 ![Users microservice domain model](./doc/diagrams/users-microservice-domain-model.png)
+
+### EBikes microservice
+
+The EBikes microservice built follwing the hexagonal architecture and don't depend on any other microservice.
+
+![EBikes microservice components diagram](./doc/diagrams/ebikes-components.png)
+![EBikes microservice domain model](./doc/diagrams/ebikes-microservice-domain-model.png)
 
 ### Rides microservice
 
