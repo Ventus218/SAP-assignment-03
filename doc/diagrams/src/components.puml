@@ -7,29 +7,44 @@ component "Admin frontend" as AdminFE <<Client>>
 
 component Backend <<Server>> {
 
+    component "Smart city" <<Microservice>> as SmartCity
+    interface "Smart city REST API" as SmartCityAPI
+    SmartCity -u-() SmartCityAPI
+    interface "Smart city events" <<Event Stream>> as SmartCityES
+    SmartCity --() SmartCityES
+
     component "EBikes" <<Microservice>> as EBikes
-    interface "EBikes API" as EBikesAPI
+    interface "EBikes REST API" as EBikesAPI
+    EBikes --u--() EBikesAPI
+    interface "EBikes events" <<Event Stream>> as EBikesES
+    EBikes -u-() EBikesES
+    EBikes -u-( SmartCityES
     
     component "Users" <<Microservice>> as Users
-    interface "Users API" as UsersAPI
+    interface "Users REST API" as UsersAPI
+    Users --u--() UsersAPI
+    interface "Users events" <<Event Stream>> as UsersES
+    Users -u-() UsersES
 
     component "Rides" <<Microservice>> as Rides
-    interface "Rides API" as RidesAPI
-
-    EBikes -u-() EBikesAPI
-
-    Users -u-() UsersAPI
-
+    interface "Rides REST API" as RidesAPI
     Rides -u-() RidesAPI
-    Rides -u-( UsersAPI
-    Rides -u-( EBikesAPI
+    interface "Rides events" <<Event Stream>> as RidesES
+    Rides -r-() RidesES
+    Rides -d-( UsersES
+    Rides -d-( EBikesES
+
+    EBikes -u-( RidesES
+    SmartCity -l-( RidesES
 }
 
 UserFE --( RidesAPI
 UserFE --( UsersAPI
 UserFE --( EBikesAPI
+UserFE --( SmartCityAPI
 AdminFE --( RidesAPI
 AdminFE --( UsersAPI
 AdminFE --( EBikesAPI
+AdminFE --( SmartCityAPI
 
 @enduml

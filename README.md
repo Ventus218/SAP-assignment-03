@@ -86,9 +86,9 @@ Autonomous bikes must follow the traffic laws (stopping at red traffic lights)
 #### Scenarios
 
 - Go on a ride:
-    1. The user chooses an available bike and selects "Start ride"
+    1. The user chooses an available bike and selects "Request bike"
     1. The bike detaches from the charging station and rides up to the user
-    1. The users rides the bike
+    1. As soon as the bike reaches the user the ride actually start
     1. The user selects "End ride"
     1. The bike autonomously rides back to the charging station
 
@@ -116,7 +116,7 @@ Given the requirements multiple bounded contexts were identified:
 - Users management
 - E-bikes management
 - Rides management
-- Autonomous city riding
+- Smart city
 
 ### Ubiquitous language
 
@@ -132,13 +132,14 @@ Given the requirements multiple bounded contexts were identified:
 |Traffic light state|A traffic light can be Red (stop) or Green (pass)|Light|
 |Junction|A place where multiple streets meet||
 |Street|A rideable road segment between two street junctions|Road|
+|Smart city|The set of items allowing autonomous mobility in the city (charging stations, traffic lights, streets and junctions)||
 |Ride|The rental of a bike from a user which aims to use it to move from one place to another||
 |Register new ebike|An action taken by the admin which has the outcome of making the system aware of a new bike which can then be rented|Create new ebike|
 |Monitor ebikes/rides|Admin's capability to check the location of each bike and which users are riding them||
 
 ## Design
 
-The system is designed follwing a microservice architecture where each bounded contexts is mapped to a single microservice or frontend.
+The system is designed follwing an event-driven microservices architecture where each bounded contexts is mapped to a single microservice or frontend.
 
 ![Components diagram](./doc/diagrams/components.png)
 
