@@ -32,7 +32,32 @@ services:
       - private_network
     environment:
       <<: *common_environment
+    depends_on:
+      users-es:
+        condition: service_healthy
     <<: *common_healthcheck
+  users-es:
+    image: apache/kafka:3.9.0
+    networks:
+      - private_network
+    environment: # https://hub.docker.com/r/apache/kafka Overriding one variable makes every other unset so you need to set them to default values
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://users-es:9092,CONTROLLER://localhost:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://users-es:9092
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@localhost:9093
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_NUM_PARTITIONS: 3
+    healthcheck:
+      test: /opt/kafka/bin/kafka-cluster.sh cluster-id --bootstrap-server users-es:9092 || exit 1
+      interval: 1s
+      timeout: 60s
+      retries: 60
 
   rides:
     build:
