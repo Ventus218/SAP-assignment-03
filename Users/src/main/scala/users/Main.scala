@@ -11,11 +11,16 @@ import users.domain.model.*
 import users.domain.UsersServiceImpl
 import users.adapters.presentation.HttpPresentationAdapter
 import users.adapters.persistence.UsersFileSystemRepositoryAdapter
+import akka.actor.typed.DispatcherSelector
 
 object Main extends App:
   given actorSystem: ActorSystem[Any] =
     ActorSystem(Behaviors.empty, "actor-system")
   given ExecutionContextExecutor = actorSystem.executionContext
+  val ioExecutionContext =
+    actorSystem.dispatchers.lookup(DispatcherSelector.blocking())
+    
+  Kafka.send("topic0", "k", "v")(using ioExecutionContext).foreach(println)
 
   val db = FileSystemDatabaseImpl(File("/data/db"))
   val adapter = UsersFileSystemRepositoryAdapter(db)

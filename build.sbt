@@ -73,6 +73,7 @@ lazy val users = project
     name := "Users",
     version := "0.1.0",
     akkaHttpSettings,
+    libraryDependencies += "org.apache.kafka" % "kafka-clients" % "3.9.0",
     assembly / assemblyOutputPath := file("./Users/executable.jar")
   )
   .dependsOn(shared)
