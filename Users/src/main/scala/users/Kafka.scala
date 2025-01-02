@@ -7,19 +7,22 @@ import org.apache.kafka.clients.producer.*
 
 object Kafka {
 
-  private val config = Properties();
-  config.put("client.id", "Users");
-  config.put("bootstrap.servers", "users-es:9092"); // TODO: externalize config
-  config.put(
+  private val producerConfig = Properties();
+  producerConfig.put("client.id", "Users");
+  producerConfig.put(
+    "bootstrap.servers",
+    "users-es:9092"
+  ); // TODO: externalize config
+  producerConfig.put(
     "key.serializer",
     "org.apache.kafka.common.serialization.StringSerializer"
   );
-  config.put(
+  producerConfig.put(
     "value.serializer",
     "org.apache.kafka.common.serialization.StringSerializer"
   );
 
-  val producer = KafkaProducer[String, String](config);
+  val producer = KafkaProducer[String, String](producerConfig);
 
   def send(
       topic: String,
