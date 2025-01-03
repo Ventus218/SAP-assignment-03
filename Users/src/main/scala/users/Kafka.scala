@@ -14,16 +14,16 @@ import org.apache.kafka.common.errors.TopicExistsException
 object Kafka {
 
   private val producerConfig = Properties();
-  producerConfig.put("client.id", "Users");
-  producerConfig.put(
+  producerConfig.setProperty("client.id", "Users");
+  producerConfig.setProperty(
     "bootstrap.servers",
     "users-es:9092"
   ); // TODO: externalize config
-  producerConfig.put(
+  producerConfig.setProperty(
     "key.serializer",
     "org.apache.kafka.common.serialization.StringSerializer"
   );
-  producerConfig.put(
+  producerConfig.setProperty(
     "value.serializer",
     "org.apache.kafka.common.serialization.StringSerializer"
   );
