@@ -6,11 +6,10 @@ import scala.util.Try
 import scala.concurrent.ExecutionContextExecutor
 import akka.actor.typed.ActorSystem
 import akka.actor.typed.scaladsl.Behaviors
-import shared.technologies.persistence.FileSystemDatabaseImpl
 import users.domain.model.*
 import users.domain.UsersServiceImpl
 import users.adapters.presentation.HttpPresentationAdapter
-import users.adapters.persistence.UsersFileSystemRepositoryAdapter
+import users.adapters.persistence.KafkaUsersEventStoreAdapter
 import akka.actor.typed.DispatcherSelector
 
 object Main extends App:
@@ -19,11 +18,8 @@ object Main extends App:
   given ExecutionContextExecutor = actorSystem.executionContext
   val ioExecutionContext =
     actorSystem.dispatchers.lookup(DispatcherSelector.blocking())
-    
-  Kafka.send("topic0", "k", "v")(using ioExecutionContext).foreach(println)
 
-  val db = FileSystemDatabaseImpl(File("/data/db"))
-  val adapter = UsersFileSystemRepositoryAdapter(db)
+  val adapter = KafkaUsersEventStoreAdapter("users-es:9092") // TODO: externalize config
   val usersService = UsersServiceImpl(adapter)
   val host = sys.env.get("HOST").getOrElse("0.0.0.0")
   val port = (for
