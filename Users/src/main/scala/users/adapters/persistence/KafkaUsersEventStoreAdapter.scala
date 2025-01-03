@@ -3,7 +3,7 @@ package users.adapters.persistence
 import scala.concurrent.*
 import scala.jdk.CollectionConverters.*
 import org.apache.kafka.common.TopicPartition
-import users.Kafka
+import shared.technologies.Kafka
 import users.domain.model.*
 import users.ports.persistence.UsersEventStore.*
 

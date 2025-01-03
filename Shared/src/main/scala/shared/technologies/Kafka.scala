@@ -1,4 +1,4 @@
-package users
+package shared.technologies
 
 import scala.concurrent.*
 import scala.jdk.OptionConverters.*
