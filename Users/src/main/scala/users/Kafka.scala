@@ -98,8 +98,8 @@ object Kafka:
         val admin = Admin.create(config)
         val topic = NewTopic(
           name,
-          partitions.map(java.lang.Integer(_)).toJava,
-          replicationFactor.map(java.lang.Short(_)).toJava
+          partitions.map(java.lang.Integer.valueOf(_)).toJava,
+          replicationFactor.map(java.lang.Short.valueOf(_)).toJava
         )
         val configs = cleanupPolicy match
           case None => Map()

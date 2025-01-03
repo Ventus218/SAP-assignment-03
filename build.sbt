@@ -1,5 +1,6 @@
 ThisBuild / scalaVersion := "3.5.2"
 ThisBuild / libraryDependencies += "org.scalatest" %% "scalatest" % "3.2.19" % Test
+ThisBuild / scalacOptions += "-deprecation"
 
 // AKKA HTTP
 ThisBuild / resolvers += "Akka library repository".at(
@@ -25,7 +26,7 @@ lazy val sharedFrontend = project
   .settings(
     name := "Shared Frontend",
     version := "0.1.0",
-    commonFrontendSettings,
+    commonFrontendSettings
   )
 
 lazy val userFrontend = project

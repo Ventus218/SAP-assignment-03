@@ -1,6 +1,6 @@
 package shared.adapters.persistence
 
-import scala.collection.JavaConverters.*
+import scala.jdk.CollectionConverters.*
 import shared.ports.persistence.Repository
 import shared.ports.persistence.exceptions.*
 import shared.technologies.persistence.InMemoryMapDatabase
