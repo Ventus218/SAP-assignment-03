@@ -54,6 +54,8 @@ lazy val shared = project
   .settings(
     name := "Shared",
     version := "0.1.0",
+    akkaHttpSettings,
+    libraryDependencies += "org.apache.kafka" % "kafka-clients" % "3.9.0",
     libraryDependencies += "com.softwaremill.sttp.client4" %% "core" % "4.0.0-M19", // for sttp
     libraryDependencies += "com.lihaoyi" %% "upickle" % "4.0.2"
   )
