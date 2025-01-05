@@ -2,7 +2,6 @@ package ebikes.domain;
 
 import scala.concurrent.*
 import ebikes.domain.model.*;
-import ebikes.ports.persistence.EBikesRepository;
 import ebikes.domain.errors.*
 import ebikes.ports.persistence.EBikesEventStore.*
 
