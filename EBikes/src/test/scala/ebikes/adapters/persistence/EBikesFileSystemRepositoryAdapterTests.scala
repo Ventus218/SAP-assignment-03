@@ -37,8 +37,9 @@ class EBikesFileSystemRepositoryAdapterTests extends AnyFlatSpec:
   it should "not add a bike to the repository if the id already exists" in new DoubleBikeService:
     val bike = bikes.head
     val res = repo.insert(bike.id, bike)
-    res.isLeft shouldBe true
-    res.left.get shouldBe a[DuplicateIdException]
+    res should matchPattern {
+      case Left(e) if e.isInstanceOf[DuplicateIdException] =>
+    }
 
   "delete" should "remove a bike from the repo" in new DoubleBikeService:
     repo.delete(bikeIds.head)
@@ -46,8 +47,9 @@ class EBikesFileSystemRepositoryAdapterTests extends AnyFlatSpec:
 
   it should "return an error if no bike with that id was found" in new CleanService:
     val res = repo.delete("blabla")
-    res.isLeft shouldBe true
-    res.left.get shouldBe a[NotInRepositoryException]
+    res should matchPattern {
+      case Left(e) if e.isInstanceOf[NotInRepositoryException] =>
+    }
 
   private given Conversion[String, EBikeId] with
     def apply(x: String): EBikeId = EBikeId(x)

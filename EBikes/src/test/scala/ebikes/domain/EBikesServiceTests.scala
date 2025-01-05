@@ -53,8 +53,9 @@ class EBikesServiceTests extends AnyFlatSpec:
   it should "not allow to register a new bike with an already existing id" in new DoubleBikeService:
     val id = bikeIds.head
     val res = service.register(id, V2D(), V2D())
-    res.isLeft shouldBe true
-    res.left.get shouldBe a[EBikeIdAlreadyInUse]
+    res should matchPattern {
+      case Left(e) if e.isInstanceOf[EBikeIdAlreadyInUse] =>
+    }
 
   private given Conversion[String, EBikeId] with
     def apply(x: String): EBikeId = EBikeId(x)
