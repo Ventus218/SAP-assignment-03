@@ -87,6 +87,7 @@ lazy val eBikes = project
     name := "EBikes",
     version := "0.1.0",
     akkaHttpSettings,
+    libraryDependencies += "org.apache.kafka" % "kafka-clients" % "3.9.0",
     libraryDependencies += "com.github.pathikrit" %% "better-files" % "3.9.2" % Test,
     assembly / assemblyOutputPath := file("./EBikes/executable.jar")
   )

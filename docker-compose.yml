@@ -43,7 +43,22 @@ services:
       - private_network
     environment:
       <<: *common_environment
+    depends_on:
+      ebikes-es:
+        condition: service_healthy
     <<: *common_healthcheck
+  ebikes-es:
+    image: apache/kafka:3.9.0
+    networks:
+      - private_network
+    environment:
+      <<: *base_kafka_environment
+      KAFKA_LISTENERS: PLAINTEXT://ebikes-es:9092,CONTROLLER://ebikes-es:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://ebikes-es:9092
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@ebikes-es:9093
+    healthcheck:
+      <<: *base_kafka_healthcheck
+      test: /opt/kafka/bin/kafka-cluster.sh cluster-id --bootstrap-server ebikes-es:9092 || exit 1
 
   users:
     build:

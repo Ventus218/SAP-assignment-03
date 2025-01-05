@@ -1,7 +1,7 @@
 package ebikes.adapters.presentation
 
-import scala.concurrent.Future
-import akka.actor.typed.ActorSystem
+import scala.concurrent.*
+import akka.actor.typed.*
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.Http.ServerBinding
 import akka.http.scaladsl.model.HttpEntity
@@ -30,42 +30,50 @@ object HttpPresentationAdapter:
       eBikesService: EBikesService,
       host: String,
       port: Int
-  )(using ActorSystem[Any]): Future[ServerBinding] =
+  )(using actorSystem: ActorSystem[Any]): Future[ServerBinding] =
+    // For IO bounded computations in the service
+    given ExecutionContext =
+      actorSystem.dispatchers.lookup(DispatcherSelector.blocking())
+
     val route =
       concat(
         pathPrefix("ebikes"):
           concat(
-            (get & pathEnd):
-              complete(eBikesService.eBikes().toArray)
-            ,
+            (get & pathEnd & onSuccess(eBikesService.eBikes())): eBikes =>
+              complete(eBikes.toArray),
             (post & pathEnd):
               entity(as[RegisterEBikeDTO]) { dto =>
-                eBikesService
-                  .register(dto.id, dto.location, dto.direction) match
-                  case Left(value) =>
-                    complete(Conflict, "EBike id already in use")
-                  case Right(value) => complete(value)
+                onSuccess(
+                  eBikesService.register(dto.id, dto.location, dto.direction)
+                ):
+                  _ match
+                    case Left(value) =>
+                      complete(Conflict, "EBike id already in use")
+                    case Right(value) => complete(value)
               }
             ,
             pathPrefix(Segment): segment =>
               val eBikeId = EBikeId(segment)
               concat(
-                (get & pathEnd):
-                  eBikesService.find(eBikeId) match
+                (get & pathEnd & onSuccess(eBikesService.find(eBikeId))):
+                  _ match
                     case None        => complete(NotFound, "EBike not found")
                     case Some(value) => complete(value)
                 ,
                 (patch & pathEnd):
                   entity(as[UpdateEBikePhisicalDataDTO]): dto =>
-                    eBikesService.updatePhisicalData(
-                      eBikeId,
-                      dto.location,
-                      dto.direction,
-                      dto.speed
-                    ) match
-                      case None =>
-                        complete(NotFound, s"EBike $segment not found")
-                      case Some(eBike) => complete(eBike)
+                    onSuccess(
+                      eBikesService.updatePhisicalData(
+                        eBikeId,
+                        dto.location,
+                        dto.direction,
+                        dto.speed
+                      )
+                    ):
+                      _ match
+                        case None =>
+                          complete(NotFound, s"EBike $segment not found")
+                        case Some(eBike) => complete(eBike)
               )
           )
         ,
