@@ -26,6 +26,8 @@ x-base_kafka_environment: &base_kafka_environment # https://hub.docker.com/r/apa
   KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
   KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
   KAFKA_NUM_PARTITIONS: 3
+  KAFKA_LOG_RETENTION_MS: -1 # Infinite log retention
+  KAFKA_ALLOW_AUTO_CREATE_TOPICS: false
 x-base_kafka_healthcheck: &base_kafka_healthcheck
   test: /opt/kafka/bin/kafka-cluster.sh cluster-id --bootstrap-server <service-name>:9092 || exit 1 # REMEMBER TO REPLACE <service-name>
   interval: 1s

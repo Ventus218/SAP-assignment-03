@@ -1,5 +1,6 @@
 ThisBuild / scalaVersion := "3.5.2"
 ThisBuild / libraryDependencies += "org.scalatest" %% "scalatest" % "3.2.19" % Test
+ThisBuild / scalacOptions += "-deprecation"
 
 // AKKA HTTP
 ThisBuild / resolvers += "Akka library repository".at(
@@ -25,7 +26,7 @@ lazy val sharedFrontend = project
   .settings(
     name := "Shared Frontend",
     version := "0.1.0",
-    commonFrontendSettings,
+    commonFrontendSettings
   )
 
 lazy val userFrontend = project
@@ -53,6 +54,8 @@ lazy val shared = project
   .settings(
     name := "Shared",
     version := "0.1.0",
+    akkaHttpSettings,
+    libraryDependencies += "org.apache.kafka" % "kafka-clients" % "3.9.0",
     libraryDependencies += "com.softwaremill.sttp.client4" %% "core" % "4.0.0-M19", // for sttp
     libraryDependencies += "com.lihaoyi" %% "upickle" % "4.0.2"
   )
@@ -73,6 +76,7 @@ lazy val users = project
     name := "Users",
     version := "0.1.0",
     akkaHttpSettings,
+    libraryDependencies += "org.apache.kafka" % "kafka-clients" % "3.9.0",
     assembly / assemblyOutputPath := file("./Users/executable.jar")
   )
   .dependsOn(shared)
