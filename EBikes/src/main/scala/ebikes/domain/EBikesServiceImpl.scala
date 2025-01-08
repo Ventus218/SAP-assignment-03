@@ -1,9 +1,10 @@
 package ebikes.domain;
 
 import scala.concurrent.*
-import ebikes.domain.model.*;
 import ebikes.domain.errors.*
-import ebikes.ports.persistence.EBikesEventStore.*
+import ebikes.domain.model.*;
+import ebikes.domain.model.EBikeEvent.*
+import ebikes.ports.persistence.EBikesEventStore
 
 class EBikesServiceImpl(private val eBikesEventStore: EBikesEventStore)
     extends EBikesService:
@@ -14,37 +15,42 @@ class EBikesServiceImpl(private val eBikesEventStore: EBikesEventStore)
       direction: V2D
   )(using ec: ExecutionContext): Future[Either[EBikeIdAlreadyInUse, EBike]] =
     val eBike = EBike(id, location, direction, 0)
-    // TODO: check existence
-    eBikesEventStore
-      .publish(EBikeEvent.Registered(EBike(id, location, direction, 0)))
-      .map(_ => Right(eBike))
+    for
+      events <- eBikesEventStore.allEvents()
+      alreadyExists = events.exists(_ match
+        case Registered(eBike) if eBike.id == id => true
+        case _                                   => false
+      )
+      res <-
+        if alreadyExists then Future(Left(EBikeIdAlreadyInUse(id)))
+        else
+          eBikesEventStore
+            .publish(EBikeEvent.Registered(eBike))
+            .map(_ => Right(eBike))
+    yield (res)
 
   override def find(id: EBikeId)(using
       ec: ExecutionContext
   ): Future[Option[EBike]] =
-    // eBikesRepository.find(id)
-    ???
+    eBikesEventStore.find(id)
 
   override def eBikes()(using ec: ExecutionContext): Future[Iterable[EBike]] =
-    // eBikesRepository.getAll()
-    ???
+    eBikesEventStore.all()
 
   override def updatePhisicalData(
       eBikeId: EBikeId,
       location: Option[V2D],
       direction: Option[V2D],
       speed: Option[Double]
-  )(using ec: ExecutionContext): Future[Option[EBike]] =
-    // eBikesRepository
-    //   .update(
-    //     eBikeId,
-    //     eBike =>
-    //       val newLocation = location.getOrElse(eBike.location)
-    //       val newDirection = direction.getOrElse(eBike.direction)
-    //       val newSpeed = speed.getOrElse(eBike.speed)
-    //       eBike.copy(eBikeId, newLocation, newDirection, newSpeed)
-    //   )
-    //   .toOption
-    ???
+  )(using ec: ExecutionContext): Future[Either[EBikeNotFound, Unit]] =
+    for
+      eBike <- find(eBikeId)
+      res <-
+        if eBike.isDefined then
+          eBikesEventStore
+            .publish(UpdatedPhisicalData(eBikeId, location, direction, speed))
+            .map(Right(_))
+        else Future(Left(EBikeNotFound(eBikeId)))
+    yield (res)
 
   def healthCheckError(): Option[String] = None

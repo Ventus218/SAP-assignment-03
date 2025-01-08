@@ -21,6 +21,6 @@ trait EBikesService:
       location: Option[V2D],
       direction: Option[V2D],
       speed: Option[Double]
-  )(using ec: ExecutionContext): Future[Option[EBike]]
+  )(using ec: ExecutionContext): Future[Either[EBikeNotFound, Unit]]
 
   def healthCheckError(): Option[String]

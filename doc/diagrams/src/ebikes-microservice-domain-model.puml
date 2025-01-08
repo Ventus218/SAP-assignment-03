@@ -4,7 +4,7 @@ title EBikes microservice domain model
 
 class EBike {
     location: V2D
-    direction: V2d
+    direction: V2D
     speed: Double
 }
 struct EBikeId {
@@ -12,19 +12,19 @@ struct EBikeId {
 }
 EBike "1" -u-> "id 1" EBikeId
 
-class EBikesRepository <<Repository>>
-EBikesRepository o-l- EBike
+class EBikesEventStore <<Repository>>
+EBikesEventStore o-l- EBike
 
 class EBikesService <<Service>> {
-    find(eBikeId: EBikeId): EBike?
-    eBikes(): Iterable<EBike>
-    register(eBikeId: EBikeId, location: V2D, direction: V2D): Either<EBikeIdAlreadyInUse, EBike>
-    updatePhisicalData(eBikeId: EBikeId, location: V2D, direction: V2D, speed: Double): EBike?
+    find(eBikeId: EBikeId): Future<EBike?>
+    eBikes(): Future<Iterable<EBike>>
+    register(eBikeId: EBikeId, location: V2D, direction: V2D): Future<Either<EBikeIdAlreadyInUse, EBike>>
+    updatePhisicalData(eBikeId: EBikeId, location: V2D, direction: V2D, speed: Double): Future<Either<EBikeNotFound, Unit>>
     ..
     healthCheckError(): Option<String>
 }
 
-EBikesService --> EBikesRepository : "uses"
+EBikesService --> EBikesEventStore : "uses"
 
 hide empty members
 
