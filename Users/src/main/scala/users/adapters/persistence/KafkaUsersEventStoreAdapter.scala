@@ -9,7 +9,7 @@ import users.ports.persistence.UsersEventStore.*
 
 class KafkaUsersEventStoreAdapter(bootstrapServers: String)
     extends UsersEventStore {
-  private lazy val producer = Kafka.Producer(bootstrapServers)
+  private lazy val producer = Kafka.Producer(bootstrapServers, "Users")
   private val topic = "CreateUserEvent"
 
   import upickle.default.*

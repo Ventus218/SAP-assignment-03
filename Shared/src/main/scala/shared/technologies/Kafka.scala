@@ -36,9 +36,12 @@ object Kafka:
   object Producer:
     import org.apache.kafka.clients.producer.*
 
-    def apply(bootstrapServers: String): KafkaProducer[String, String] =
+    def apply(
+        bootstrapServers: String,
+        clientId: String
+    ): KafkaProducer[String, String] =
       val config = Properties();
-      config.setProperty("client.id", "Users");
+      config.setProperty("client.id", clientId);
       config.setProperty("bootstrap.servers", bootstrapServers);
       config.setProperty(
         "key.serializer",
