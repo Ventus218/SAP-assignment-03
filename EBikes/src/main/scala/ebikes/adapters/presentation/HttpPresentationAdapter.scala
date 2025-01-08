@@ -14,6 +14,7 @@ import ebikes.domain.model.*
 import ebikes.domain.EBikesService
 import ebikes.adapters.presentation.dto.*
 import shared.adapters.presentation.HealthCheckError
+import shared.adapters.presentation.ExceptionHandlers
 
 object HttpPresentationAdapter:
 
@@ -38,44 +39,45 @@ object HttpPresentationAdapter:
     val route =
       concat(
         pathPrefix("ebikes"):
-          concat(
-            (get & pathEnd & onSuccess(eBikesService.eBikes())): eBikes =>
-              complete(eBikes.toArray),
-            (post & pathEnd):
-              entity(as[RegisterEBikeDTO]) { dto =>
-                onSuccess(
-                  eBikesService.register(dto.id, dto.location, dto.direction)
-                ):
-                  _ match
-                    case Left(value) =>
-                      complete(Conflict, "EBike id already in use")
-                    case Right(value) => complete(value)
-              }
-            ,
-            pathPrefix(Segment): segment =>
-              val eBikeId = EBikeId(segment)
-              concat(
-                (get & pathEnd & onSuccess(eBikesService.find(eBikeId))):
-                  _ match
-                    case None        => complete(NotFound, "EBike not found")
-                    case Some(value) => complete(value)
-                ,
-                (patch & pathEnd):
-                  entity(as[UpdateEBikePhisicalDataDTO]): dto =>
-                    onSuccess(
-                      eBikesService.updatePhisicalData(
-                        eBikeId,
-                        dto.location,
-                        dto.direction,
-                        dto.speed
-                      )
-                    ):
-                      _ match
-                        case None =>
-                          complete(NotFound, s"EBike $segment not found")
-                        case Some(eBike) => complete(eBike)
-              )
-          )
+          handleExceptions(ExceptionHandlers.log):
+            concat(
+              (get & pathEnd & onSuccess(eBikesService.eBikes())): eBikes =>
+                complete(eBikes.toArray),
+              (post & pathEnd):
+                entity(as[RegisterEBikeDTO]) { dto =>
+                  onSuccess(
+                    eBikesService.register(dto.id, dto.location, dto.direction)
+                  ):
+                    _ match
+                      case Left(value) =>
+                        complete(Conflict, "EBike id already in use")
+                      case Right(value) => complete(value)
+                }
+              ,
+              pathPrefix(Segment): segment =>
+                val eBikeId = EBikeId(segment)
+                concat(
+                  (get & pathEnd & onSuccess(eBikesService.find(eBikeId))):
+                    _ match
+                      case None        => complete(NotFound, "EBike not found")
+                      case Some(value) => complete(value)
+                  ,
+                  (patch & pathEnd):
+                    entity(as[UpdateEBikePhisicalDataDTO]): dto =>
+                      onSuccess(
+                        eBikesService.updatePhisicalData(
+                          eBikeId,
+                          dto.location,
+                          dto.direction,
+                          dto.speed
+                        )
+                      ):
+                        _ match
+                          case Left(_) =>
+                            complete(NotFound, s"EBike $segment not found")
+                          case Right(_) => complete(OK)
+                )
+            )
         ,
         path("healthCheck"):
           eBikesService.healthCheckError() match
