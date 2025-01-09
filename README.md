@@ -141,40 +141,53 @@ Given the requirements multiple bounded contexts were identified:
 
 The system is designed follwing an event-driven microservices architecture where each bounded contexts is mapped to a single microservice or frontend.
 
+Every microservice will expose an HTTP REST API for client consumption while internally to the system communication will rely on an event broker.
+
 ![Components diagram](./doc/diagrams/components.png)
 
-### Users microservice
+In general every microservice will have the following architecture:
 
-The Users microservice don't depend on any other microservice and is responsible for managing registered user data.
+![Generic microservice components diagram](./doc/diagrams/generic-microservice-components.png)
 
-![Users microservice components diagram](./doc/diagrams/users-components.png)
-![Users microservice domain model](./doc/diagrams/users-microservice-domain-model.png)
+- A command side will be used to publish commands (or command-events) to the event store.
+- A query side will consume published commands to use them for event-sourcing and if applicable materialise the state to achieve more efficient queries.
+- Any data needed from other microservices will be consumed off the event store and materialised as described in the query side.
 
-### EBikes microservice
+## Possible replication
+For simplicity both the command and the query sides will be running inside the same process but if split they could be replicated independently.
 
-The EBikes microservice built follwing the hexagonal architecture and don't depend on any other microservice.
+The command side is stateless since it doesn't need to have any knowledge about the current state of the system (as explained [here](#handling-http-requests))
 
-![EBikes microservice components diagram](./doc/diagrams/ebikes-components.png)
-![EBikes microservice domain model](./doc/diagrams/ebikes-microservice-domain-model.png)
+The query side is stateless while considering only event-sourcing and stateful if it materialises the state, but it could be replicated even in this case as when initialised it will consume all the events from the beginning actually restoring the materialised view.
 
-### Rides microservice
+## Handling HTTP Requests
 
-The Rides microservice is built follwing the hexagonal architecture.
+"Read" requests are trivial to handle, they just ask the query model and give the answer as a response.
 
-It depends on both the other microservices (EBikes and Users).
+"Write" requests are more difficult to handle, especially because the command side doesn't have any knowledge about the current state of the system and this means it cannot undestand if a request is valid or not (for example updating the state of a bike if it doesn't exist).
 
-![Rides microservice components diagram](./doc/diagrams/rides-components.png)
-![Rides microservice domain model](./doc/diagrams/rides-microservice-domain-model.png)
+So every "write" request will be handled as explained in this example:
+1. The client sends a POST request to register a new bike
+1. The command side publishes the relative command and return a response where success means that the command has been recorded (but it may not be applicable). The response includes a unique identifier for the command that was issued
+1. The client can now poll the server for the given identifier until it gets a response
+1. The response will contain the actual result of applying the command.
+
+Obviously when applying event-sourcing commands that are not valid for the current state of the domain entity will just be ignored.
+
+This is a bit of a burden for the client but it guarantees read-after-write consistency keeping the command side stateless.
 
 ## Deployment
+<!-- TODO: update! Kubernetes? -->
 Each microservice will be deployed as a standalone Docker container while the two frontends will be deployed as standard GUI apps.
 
 In order to achieve an effective and simple deployment a [docker compose file](./docker-compose.yml) has been written.
 
 ## Fault tolerance / recovering
+<!-- TODO: update! Kubernetes? -->
 The system will exploit the underlying deployment platform (Docker / Docker compose) to restart services in case of failure.
 
 ## Service discovery
+<!-- TODO: update! Kubernetes? -->
 A service discovery mechanism has to be implemented due to the subsequent reasons:
 - Each microservice could be restarted in case of failure and as a consequence it could change it's network address
 - Future versions of the software may require to create multiple instances of the same service due to heavy workloads and therefore the network address may change at runtime.

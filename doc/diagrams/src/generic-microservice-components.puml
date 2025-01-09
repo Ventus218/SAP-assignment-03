@@ -1,0 +1,35 @@
+@startuml generic-microservice-components
+
+left to right direction
+
+component EventStore
+interface "HTTP REST API" as API
+
+hexagon Adapters {
+    hexagon Domain as DomainHex {
+        component Domain {
+            portout OtherMicroservice
+            portout Query
+            portout Command
+            portin Service
+        }
+    }
+
+    component "HTTPPresentationAdapter" as HTTPAdapter
+    HTTPAdapter -d-> Service
+    HTTPAdapter -l-() API
+
+    component OtherMicroserviceEventStoreAdapter
+    OtherMicroserviceEventStoreAdapter -u-|> OtherMicroservice
+    OtherMicroserviceEventStoreAdapter <-r- EventStore
+    
+    component QueryEventStoreAdapter
+    QueryEventStoreAdapter -u-|> Query
+    QueryEventStoreAdapter <-- EventStore
+
+    component CommandEventStoreAdapter
+    CommandEventStoreAdapter -u-|> Command
+    CommandEventStoreAdapter --> EventStore
+}
+
+@enduml
