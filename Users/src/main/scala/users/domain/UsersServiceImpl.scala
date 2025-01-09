@@ -1,30 +1,21 @@
 package users.domain;
 
-import scala.concurrent.*
-import users.domain.model.*
+import users.domain.model.*;
 import users.domain.errors.*
-import users.ports.persistence.UsersEventStore.*
+import users.ports.persistence.UsersRepository;
 
-class UsersServiceImpl(private val usersEventStore: UsersEventStore)
+class UsersServiceImpl(private val usersRepository: UsersRepository)
     extends UsersService:
 
-  override def registerUser(username: Username)(using
-      ec: ExecutionContext
-  ): Future[Either[UsernameAlreadyInUse, User]] =
+  override def registerUser(
+      username: Username
+  ): Either[UsernameAlreadyInUse, User] =
     val user = User(username)
-    for
-      users <- users()
-      res <-
-        if users.exists(_ == user) then
-          Future(Left(UsernameAlreadyInUse(username)))
-        else
-          usersEventStore.publish(CreateUserEvent(user)).map(_ => Right(user))
-    yield (res)
+    usersRepository.insert(user.username, user) match
+      case Left(value)  => Left(UsernameAlreadyInUse(username))
+      case Right(value) => Right(user)
 
-  override def users()(using ec: ExecutionContext): Future[Iterable[User]] =
-    usersEventStore
-      .allEvents()
-      .map(_.toSet)
-      .map(_.map(_.user))
+  override def users(): Iterable[User] =
+    usersRepository.getAll()
 
   override def healthCheckError(): Option[String] = None

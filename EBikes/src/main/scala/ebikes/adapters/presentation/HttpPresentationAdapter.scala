@@ -1,7 +1,7 @@
 package ebikes.adapters.presentation
 
-import scala.concurrent.*
-import akka.actor.typed.*
+import scala.concurrent.Future
+import akka.actor.typed.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.Http.ServerBinding
 import akka.http.scaladsl.model.HttpEntity
@@ -14,7 +14,6 @@ import ebikes.domain.model.*
 import ebikes.domain.EBikesService
 import ebikes.adapters.presentation.dto.*
 import shared.adapters.presentation.HealthCheckError
-import shared.adapters.presentation.ExceptionHandlers
 
 object HttpPresentationAdapter:
 
@@ -31,53 +30,44 @@ object HttpPresentationAdapter:
       eBikesService: EBikesService,
       host: String,
       port: Int
-  )(using actorSystem: ActorSystem[Any]): Future[ServerBinding] =
-    // For IO bounded computations in the service
-    given ExecutionContext =
-      actorSystem.dispatchers.lookup(DispatcherSelector.blocking())
-
+  )(using ActorSystem[Any]): Future[ServerBinding] =
     val route =
       concat(
         pathPrefix("ebikes"):
-          handleExceptions(ExceptionHandlers.log):
-            concat(
-              (get & pathEnd & onSuccess(eBikesService.eBikes())): eBikes =>
-                complete(eBikes.toArray),
-              (post & pathEnd):
-                entity(as[RegisterEBikeDTO]) { dto =>
-                  onSuccess(
-                    eBikesService.register(dto.id, dto.location, dto.direction)
-                  ):
-                    _ match
-                      case Left(value) =>
-                        complete(Conflict, "EBike id already in use")
-                      case Right(value) => complete(value)
-                }
-              ,
-              pathPrefix(Segment): segment =>
-                val eBikeId = EBikeId(segment)
-                concat(
-                  (get & pathEnd & onSuccess(eBikesService.find(eBikeId))):
-                    _ match
-                      case None        => complete(NotFound, "EBike not found")
-                      case Some(value) => complete(value)
-                  ,
-                  (patch & pathEnd):
-                    entity(as[UpdateEBikePhisicalDataDTO]): dto =>
-                      onSuccess(
-                        eBikesService.updatePhisicalData(
-                          eBikeId,
-                          dto.location,
-                          dto.direction,
-                          dto.speed
-                        )
-                      ):
-                        _ match
-                          case Left(_) =>
-                            complete(NotFound, s"EBike $segment not found")
-                          case Right(_) => complete(OK)
-                )
-            )
+          concat(
+            (get & pathEnd):
+              complete(eBikesService.eBikes().toArray)
+            ,
+            (post & pathEnd):
+              entity(as[RegisterEBikeDTO]) { dto =>
+                eBikesService
+                  .register(dto.id, dto.location, dto.direction) match
+                  case Left(value) =>
+                    complete(Conflict, "EBike id already in use")
+                  case Right(value) => complete(value)
+              }
+            ,
+            pathPrefix(Segment): segment =>
+              val eBikeId = EBikeId(segment)
+              concat(
+                (get & pathEnd):
+                  eBikesService.find(eBikeId) match
+                    case None        => complete(NotFound, "EBike not found")
+                    case Some(value) => complete(value)
+                ,
+                (patch & pathEnd):
+                  entity(as[UpdateEBikePhisicalDataDTO]): dto =>
+                    eBikesService.updatePhisicalData(
+                      eBikeId,
+                      dto.location,
+                      dto.direction,
+                      dto.speed
+                    ) match
+                      case None =>
+                        complete(NotFound, s"EBike $segment not found")
+                      case Some(eBike) => complete(eBike)
+              )
+          )
         ,
         path("healthCheck"):
           eBikesService.healthCheckError() match
