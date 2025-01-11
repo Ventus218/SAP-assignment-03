@@ -160,6 +160,10 @@ The command side is stateless since it doesn't need to have any knowledge about 
 
 The query side is stateless while considering only event-sourcing and stateful if it materialises the state, but it could be replicated even in this case as when initialised it will consume all the events from the beginning actually restoring the materialised view.
 
+> **Note:**
+>
+> Keeping reads consistent would require that requests from a client are always directed to the same query side instance
+
 ## Handling HTTP Requests
 
 "Read" requests are trivial to handle, they just ask the query model and give the answer as a response.
