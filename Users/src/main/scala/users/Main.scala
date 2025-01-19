@@ -11,6 +11,7 @@ import users.domain.model.*
 import users.domain.UsersServiceImpl
 import users.adapters.presentation.HttpPresentationAdapter
 import users.adapters.persistence.UsersFileSystemRepositoryAdapter
+import users.adapters.UsersCommandSideKafkaAdapter
 
 object Main extends App:
   given actorSystem: ActorSystem[Any] =
@@ -18,8 +19,10 @@ object Main extends App:
   given ExecutionContextExecutor = actorSystem.executionContext
 
   val db = FileSystemDatabaseImpl(File("/data/db"))
-  val adapter = UsersFileSystemRepositoryAdapter(db)
-  val usersService = UsersServiceImpl(adapter)
+  val repoAdapter = UsersFileSystemRepositoryAdapter(db)
+  val commandSideAdapter =
+    UsersCommandSideKafkaAdapter("kafka:9092", "UsersService", "users")
+  val usersService = UsersServiceImpl(commandSideAdapter, ???)
   val host = sys.env.get("HOST").getOrElse("0.0.0.0")
   val port = (for
     portString <- sys.env.get("PORT")

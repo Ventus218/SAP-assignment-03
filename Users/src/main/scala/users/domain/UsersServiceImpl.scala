@@ -1,21 +1,23 @@
 package users.domain;
 
+import scala.concurrent.*
+import shared.domain.EventSourcing.CommandId
 import users.domain.model.*;
 import users.domain.errors.*
-import users.ports.persistence.UsersRepository;
+import users.ports.*
 
-class UsersServiceImpl(private val usersRepository: UsersRepository)
-    extends UsersService:
+class UsersServiceImpl(
+    private val usersCommandSide: UsersCommandSide,
+    private val usersQuerySide: UsersQuerySide
+) extends UsersService:
 
-  override def registerUser(
-      username: Username
-  ): Either[UsernameAlreadyInUse, User] =
-    val user = User(username)
-    usersRepository.insert(user.username, user) match
-      case Left(value)  => Left(UsernameAlreadyInUse(username))
-      case Right(value) => Right(user)
+  override def registerUser(username: Username)(using
+      ExecutionContext
+  ): Future[CommandId] =
+    val command = UserCommands.Registered(CommandId.random(), username)
+    usersCommandSide.publish(command).map(_ => command.id)
 
   override def users(): Iterable[User] =
-    usersRepository.getAll()
+    usersQuerySide.getAll()
 
   override def healthCheckError(): Option[String] = None

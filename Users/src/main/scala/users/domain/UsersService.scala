@@ -1,11 +1,15 @@
 package users.domain;
 
+import scala.concurrent.*
 import users.domain.model.*;
 import users.domain.errors.*
+import shared.domain.EventSourcing.CommandId
 
 trait UsersService:
 
-  def registerUser(username: Username): Either[UsernameAlreadyInUse, User]
+  def registerUser(username: Username)(using
+      ExecutionContext
+  ): Future[CommandId]
 
   def users(): Iterable[User]
 

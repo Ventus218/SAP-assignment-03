@@ -5,6 +5,10 @@ object EventSourcing:
     def id: Id
 
   case class CommandId(value: String)
+  object CommandId:
+    def random(): CommandId =
+      import java.util.UUID
+      CommandId(UUID.randomUUID().toString())
 
   trait Command[TId, T <: Entity[TId], Error]:
     val id: CommandId
