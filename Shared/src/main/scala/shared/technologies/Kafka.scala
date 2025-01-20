@@ -10,9 +10,14 @@ object Kafka:
   object Consumer:
     import org.apache.kafka.clients.consumer.KafkaConsumer
 
+    /** Creates a kafka consumer with random unique group id and offset pointing
+      * at the beginning of the queue
+      */
     def apply(bootstrapServers: String): KafkaConsumer[String, String] =
       val config = new Properties();
       config.setProperty("bootstrap.servers", bootstrapServers);
+      config.setProperty("group.id", java.util.UUID.randomUUID().toString())
+      config.setProperty("auto.offset.reset", "earliest")
       config.setProperty(
         "key.deserializer",
         "org.apache.kafka.common.serialization.StringDeserializer"
