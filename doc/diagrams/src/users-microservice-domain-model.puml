@@ -2,25 +2,45 @@
 
 title Users microservice domain model
 
-class User {}
+!includesub cqrs-es-domain-model.puml!ES
+
+hide empty members
+
+interface UserCommands<Username, User, UserCommandErrors> extends Command
+
+enum UserCommandErrors {
+    UsernameAlreadyInUse(username: Username)
+}
+
+struct Registered extends UserCommands {
+    id: CommandId
+    entityId: Username
+    apply(previous: Option<User>): Either<UsernameAlreadyInUse, Option<User>>
+}
+
+struct User<Username> extends Entity
 
 struct Username {
     value: String
 }
-User "1" -u-> "id 1" Username
 
-class UsersEventStore <<Repository>>
-UsersEventStore o-l- User
+class UserCommandsRepository <<Repository>>
 
 class UsersService <<Service>> {
-    registerUser(username: Username): FutureEither<UsernameAlreadyInUse, User>>
-    users(): FutureIterable<User>>
+    registerUser(username: Username): Future<CommandId>
+    users(): Iterable<User>
     ..
     healthCheckError(): Option<String>
 }
 
-UsersService --> UsersEventStore : "uses"
+class UsersCommandSideKafkaAdapter
+class UsersQuerySideKafkaAdapter
 
-hide empty members
+User "1" -> "id 1" Username
+UserCommandsRepository o-l- UserCommands
+UsersService --> UsersCommandSideKafkaAdapter : "uses"
+UsersService --> UsersQuerySideKafkaAdapter : "uses"
+UsersQuerySideKafkaAdapter --> UserCommandsRepository : "uses"
+UserCommands -l[hidden]-> UserCommandErrors
 
 @enduml

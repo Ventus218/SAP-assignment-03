@@ -3,19 +3,21 @@
 hide empty members
 
 package domain {
+    !startsub ES
     interface Entity<Id> {
         id: Id
-    }
-
-    struct CommandId {
-        value: String
     }
 
     abstract class Command<TId, T extends Entity<TId>, Error> {
         id: CommandId
         entityId: TId
-        {abstract} apply<E extends Error>(previous: Option<T>): Either<E, Option<T>>
+        {abstract} apply(previous: Option<T>): Either<Error, Option<T>>
         {static} applyCommands<TId, T extends Entity<TId>>(commands: Iterable<Command<TId, T, ?>): Option<T>
+    }
+    !endsub
+
+    struct CommandId {
+        value: String
     }
 }
 
