@@ -153,6 +153,28 @@ In general every microservice will have the following architecture:
 - A query side will consume published commands to use them for event-sourcing and if applicable materialise the state to achieve more efficient queries.
 - Any data needed from other microservices will be consumed off the event store and materialised as described in the query side.
 
+## Event sourcing and CQRS
+![CQRS and ES](./doc/diagrams/cqrs-es-domain-model)
+This is a generic implementation of the CQRS and ES patterns.
+
+### Event sourcing
+Basically every entity that wants to be even sourced should implement the Entity interface that just requires to expose an entity identifier.
+
+All the commands that can be applied to an entity must implement the Command interface which requires:
+- an *id* which uniquely identifies the command
+- an *entityId* which uniquely identifies the command
+- and should provide an *apply* method which applies the command to an optional previous version of an entity returning the new version or an error.
+
+The Command interface is actually an abstract class which provides a static method that applies in sequence all the commands in a collection which do not result in errors.
+It is expected that every command refers to the same entity.
+
+### CQRS
+Two interface are provided:
+- *CommandSide* which allows to publish a command
+- *QuerySide* which allows to find a specific entity and getting all the entities.
+
+Two generic implementations are also provided to work with a Kafka backend.
+
 ## Possible replication
 For simplicity both the command and the query sides will be running inside the same process but if split they could be replicated independently.
 

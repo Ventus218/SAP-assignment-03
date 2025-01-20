@@ -1,0 +1,40 @@
+@startuml cqrs-es-domain-model
+
+hide empty members
+
+package domain {
+    interface Entity<Id> {
+        id: Id
+    }
+
+    struct CommandId {
+        value: String
+    }
+
+    abstract class Command<TId, T extends Entity<TId>, Error> {
+        id: CommandId
+        entityId: TId
+        {abstract} apply<E extends Error>(previous: Option<T>): Either<E, Option<T>>
+        {static} applyCommands<TId, T extends Entity<TId>>(commands: Iterable<Command<TId, T, ?>): Option<T>
+    }
+}
+
+set separator none
+package ports.cqrs {
+    interface CommandSide<TId, T extends Entity<TId>, Error, C extends Command<TId, T, Error>> {
+        publish(command: C)(using ExecutionContext): Future<Unit>
+    }
+    interface QuerySide<TId, T extends Entity<TId>>{
+        find(id: TId): Option<T>
+        getAll(): Iterable<T>
+    }
+}
+
+package adapters.cqrs {
+    class CommandSideKafkaAdapter<TId, T extends Entity<TId>, Error, C extends Command<TId, T, Error>> extends CommandSide
+    class QuerySideKafkaAdapter<TId, T extends Entity<TId>> extends QuerySide
+}
+
+domain <--- ports.cqrs
+
+@enduml
