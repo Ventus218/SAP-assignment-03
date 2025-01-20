@@ -6,23 +6,34 @@ import scala.util.Try
 import scala.concurrent.ExecutionContextExecutor
 import akka.actor.typed.ActorSystem
 import akka.actor.typed.scaladsl.Behaviors
-import shared.technologies.persistence.FileSystemDatabaseImpl
+import shared.technologies.persistence.InMemoryMapDatabaseImpl
 import users.domain.model.*
 import users.domain.UsersServiceImpl
 import users.adapters.presentation.HttpPresentationAdapter
-import users.adapters.persistence.UsersFileSystemRepositoryAdapter
-import users.adapters.UsersCommandSideKafkaAdapter
+import users.adapters.*
+import users.adapters.query.UsersQuerySideKafkaAdapter
 
 object Main extends App:
   given actorSystem: ActorSystem[Any] =
     ActorSystem(Behaviors.empty, "actor-system")
   given ExecutionContextExecutor = actorSystem.executionContext
 
-  val db = FileSystemDatabaseImpl(File("/data/db"))
-  val repoAdapter = UsersFileSystemRepositoryAdapter(db)
+  val kafkaBootstrapServers =
+    sys.env.get("KAFKA_SERVICE_ADDRESS").getOrElse("kafka:9092")
+  val kafkaTopic = "users"
   val commandSideAdapter =
-    UsersCommandSideKafkaAdapter("kafka:9092", "UsersService", "users")
-  val usersService = UsersServiceImpl(commandSideAdapter, ???)
+    UsersCommandSideKafkaAdapter(
+      kafkaBootstrapServers,
+      "UsersService",
+      kafkaTopic
+    )
+  val userCommandsRepository = UserCommandsRepository(InMemoryMapDatabaseImpl())
+  val querySideAdapter = UsersQuerySideKafkaAdapter(
+    userCommandsRepository,
+    kafkaBootstrapServers,
+    kafkaTopic
+  )
+  val usersService = UsersServiceImpl(commandSideAdapter, querySideAdapter)
   val host = sys.env.get("HOST").getOrElse("0.0.0.0")
   val port = (for
     portString <- sys.env.get("PORT")

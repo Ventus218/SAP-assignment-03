@@ -1,4 +1,4 @@
-package users.ports
+package users.ports.query
 
 import shared.ports.QuerySide
 import users.domain.model.*

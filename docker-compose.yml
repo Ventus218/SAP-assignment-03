@@ -2,6 +2,7 @@ x-common_environment: &common_environment
   EBIKES_SERVICE_ADDRESS: ebikes:8080
   USERS_SERVICE_ADDRESS: users:8080
   RIDES_SERVICE_ADDRESS: rides:8080
+  KAFKA_SERVICE_ADDRESS: kafka:9092
 
 x-common_healthcheck: &common_healthcheck
   healthcheck:

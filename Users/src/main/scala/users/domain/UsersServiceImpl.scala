@@ -5,6 +5,7 @@ import shared.domain.EventSourcing.CommandId
 import users.domain.model.*;
 import users.domain.errors.*
 import users.ports.*
+import users.ports.query.UsersQuerySide
 
 class UsersServiceImpl(
     private val usersCommandSide: UsersCommandSide,
