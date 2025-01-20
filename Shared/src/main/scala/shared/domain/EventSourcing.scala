@@ -43,4 +43,6 @@ object EventSourcing:
         case Some(head) =>
           it.tail
             .filter(_.entityId == head.entityId)
-            .foldLeft(None)((e, command) => command(e).getOrElse(e))
+            .foldLeft(head(None).toOption.flatten)((e, command) =>
+              command(e).getOrElse(e)
+            )
