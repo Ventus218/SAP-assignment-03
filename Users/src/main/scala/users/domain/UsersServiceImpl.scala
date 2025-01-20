@@ -4,8 +4,8 @@ import scala.concurrent.*
 import shared.domain.EventSourcing.CommandId
 import users.domain.model.*;
 import users.domain.errors.*
-import users.ports.*
-import users.ports.query.UsersQuerySide
+import users.ports.cqrs.*
+import users.ports.UsersService
 
 class UsersServiceImpl(
     private val usersCommandSide: UsersCommandSide,

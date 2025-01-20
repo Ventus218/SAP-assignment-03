@@ -1,12 +1,12 @@
-package users.adapters.query
+package users.adapters.cqrs
 
 import shared.adapters.QuerySideKafkaAdapter
-import users.domain.model.*
-import users.ports.query.UsersQuerySide
 import shared.ports.persistence.Repository
 import shared.domain.EventSourcing.CommandId
+import users.domain.model.*
+import users.ports.cqrs.UsersQuerySide
 
-import users.adapters.UserCommandsSerialization.given
+import UserCommandsSerialization.given
 
 class UsersQuerySideKafkaAdapter(
     repo: Repository[CommandId, UserCommands],

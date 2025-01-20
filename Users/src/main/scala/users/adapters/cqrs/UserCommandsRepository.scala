@@ -1,4 +1,4 @@
-package users.adapters
+package users.adapters.cqrs
 
 import shared.domain.EventSourcing.CommandId
 import shared.technologies.persistence.InMemoryMapDatabase

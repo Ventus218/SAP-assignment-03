@@ -11,7 +11,7 @@ import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import spray.json.RootJsonFormat
 import spray.json.DefaultJsonProtocol.*
 import users.domain.model.*
-import users.domain.UsersService
+import users.ports.UsersService
 
 object HttpPresentationAdapter:
 

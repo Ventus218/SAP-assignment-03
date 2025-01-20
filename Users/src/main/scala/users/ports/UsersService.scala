@@ -1,4 +1,4 @@
-package users.domain;
+package users.ports;
 
 import scala.concurrent.*
 import users.domain.model.*;

@@ -1,4 +1,4 @@
-package users.adapters
+package users.adapters.cqrs
 
 import upickle.default.*
 import shared.domain.EventSourcing.*

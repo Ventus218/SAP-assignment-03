@@ -1,17 +1,12 @@
-package users.adapters
+package users.adapters.cqrs
 
 import scala.concurrent.*
 import upickle.default.*
 import shared.adapters.CommandSideKafkaAdapter
 import users.domain.model.*
-import upickle.default
-import users.ports.UsersCommandSide
+import users.ports.cqrs.*
 
-object UsersCommandSideKafkaAdapter:
-  import shared.domain.EventSourcing.CommandId
-  given ReadWriter[CommandId] = ReadWriter.derived
-  given ReadWriter[Username] = ReadWriter.derived
-  given rw: ReadWriter[UserCommands] = ReadWriter.derived
+import UserCommandsSerialization.given
 
 class UsersCommandSideKafkaAdapter(
     bootstrapServers: String,
@@ -26,5 +21,5 @@ class UsersCommandSideKafkaAdapter(
       bootstrapServers,
       clientId,
       topic
-    )(using UsersCommandSideKafkaAdapter.rw),
+    ),
       UsersCommandSide

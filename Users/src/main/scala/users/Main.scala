@@ -11,7 +11,9 @@ import users.domain.model.*
 import users.domain.UsersServiceImpl
 import users.adapters.presentation.HttpPresentationAdapter
 import users.adapters.*
-import users.adapters.query.UsersQuerySideKafkaAdapter
+import users.adapters.cqrs.UsersQuerySideKafkaAdapter
+import adapters.cqrs.UserCommandsRepository
+import adapters.cqrs.UsersCommandSideKafkaAdapter
 
 object Main extends App:
   given actorSystem: ActorSystem[Any] =
