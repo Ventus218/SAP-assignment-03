@@ -1,7 +1,7 @@
 package users.ports.cqrs
 
 import users.domain.model.*
-import shared.ports.CommandSide
+import shared.ports.cqrs.CommandSide
 
 trait UsersCommandSide
     extends CommandSide[Username, User, UserCommandErrors, UserCommands]

@@ -1,4 +1,4 @@
-package shared.ports
+package shared.ports.cqrs
 
 import scala.concurrent.*
 import shared.domain.EventSourcing.*

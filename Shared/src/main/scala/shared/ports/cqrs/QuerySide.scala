@@ -1,4 +1,4 @@
-package shared.ports
+package shared.ports.cqrs
 
 import shared.domain.EventSourcing.Entity
 

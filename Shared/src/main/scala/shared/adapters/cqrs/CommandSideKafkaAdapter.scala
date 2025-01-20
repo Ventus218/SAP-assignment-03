@@ -1,9 +1,9 @@
-package shared.adapters
+package shared.adapters.cqrs
 
 import scala.concurrent.*
 import shared.domain.EventSourcing.*
 import shared.technologies.Kafka.Producer
-import shared.ports.CommandSide
+import shared.ports.cqrs.CommandSide
 import upickle.default.*
 
 abstract class CommandSideKafkaAdapter[TId, T <: Entity[

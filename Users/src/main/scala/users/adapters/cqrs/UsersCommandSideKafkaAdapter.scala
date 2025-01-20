@@ -2,7 +2,7 @@ package users.adapters.cqrs
 
 import scala.concurrent.*
 import upickle.default.*
-import shared.adapters.CommandSideKafkaAdapter
+import shared.adapters.cqrs.CommandSideKafkaAdapter
 import users.domain.model.*
 import users.ports.cqrs.*
 

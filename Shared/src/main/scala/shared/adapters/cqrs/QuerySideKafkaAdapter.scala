@@ -1,9 +1,9 @@
-package shared.adapters
+package shared.adapters.cqrs
 
 import scala.jdk.CollectionConverters.*
 import java.time.Duration
 import upickle.default.*
-import shared.ports.QuerySide
+import shared.ports.cqrs.QuerySide
 import shared.domain.EventSourcing.*
 import shared.ports.persistence.Repository
 import shared.technologies.Kafka.Consumer
