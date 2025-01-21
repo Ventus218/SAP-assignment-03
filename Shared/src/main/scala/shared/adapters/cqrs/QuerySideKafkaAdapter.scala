@@ -22,20 +22,22 @@ class QuerySideKafkaAdapter[TId, T <: Entity[
   private def cache = synchronized(_cache)
   private def cache_=(v: IndexedSeq[C]) = synchronized { _cache = v }
 
-  Thread(() => {
-    Consumer.autocloseable(bootstrapServers): consumer =>
-      consumer.subscribe(List(topic).asJava)
-      while true do
-        val commands = Iterator
-          .continually(
-            consumer.poll(java.time.Duration.ofMillis(20)).asScala
-          )
-          .takeWhile(_.nonEmpty)
-          .flatten
-          .map(r => read[C](r.value()))
-          .toSeq
-        if !commands.isEmpty then cache = cache ++ commands
-  }).start()
+  Thread.ofVirtual
+    .name("query-side-kafka-consumer")
+    .start(() => {
+      Consumer.autocloseable(bootstrapServers): consumer =>
+        consumer.subscribe(List(topic).asJava)
+        while true do
+          val commands = Iterator
+            .continually(
+              consumer.poll(java.time.Duration.ofMillis(20)).asScala
+            )
+            .takeWhile(_.nonEmpty)
+            .flatten
+            .map(r => read[C](r.value()))
+            .toSeq
+          if !commands.isEmpty then cache = cache ++ commands
+    })
 
   override def find(id: TId): Option[T] =
     cache.filter(_.entityId == id).applyCommands()
