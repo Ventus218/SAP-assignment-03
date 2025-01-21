@@ -12,6 +12,7 @@ import spray.json.RootJsonFormat
 import spray.json.DefaultJsonProtocol.*
 import users.domain.model.*
 import users.ports.UsersService
+import users.domain.model.UserCommandErrors.{NotFound => UserNotFound, *}
 
 object HttpPresentationAdapter:
 
@@ -42,6 +43,22 @@ object HttpPresentationAdapter:
               entity(as[Username]): username =>
                 onSuccess(usersService.registerUser(username)): commandId =>
                   complete(commandId)
+            ,
+            (get & path("commands" / Segment)): segment =>
+              usersService.commandResult(CommandId(segment)) match
+                case Left(value) => complete(NotFound)
+                case Right(value) =>
+                  value match
+                    case Right(value) => complete(value)
+                    case Left(value) =>
+                      value match
+                        case UsernameAlreadyInUse(username) =>
+                          complete(
+                            Conflict,
+                            s"$username username already in use"
+                          )
+                        case UserNotFound(username) =>
+                          complete(NotFound)
           )
         ,
         path("healthCheck"):

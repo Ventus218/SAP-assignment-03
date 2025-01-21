@@ -3,7 +3,7 @@ package users.ports;
 import scala.concurrent.*
 import users.domain.model.*;
 import users.domain.errors.*
-import shared.domain.EventSourcing.CommandId
+import shared.domain.EventSourcing.*
 
 trait UsersService:
 
@@ -12,5 +12,9 @@ trait UsersService:
   ): Future[CommandId]
 
   def users(): Iterable[User]
+
+  def commandResult(
+      id: CommandId
+  ): Either[CommandNotFound, Either[UserCommandErrors, Option[User]]]
 
   def healthCheckError(): Option[String]

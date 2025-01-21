@@ -3,20 +3,20 @@ package shared.adapters.cqrs
 import scala.jdk.CollectionConverters.*
 import java.time.Duration
 import upickle.default.*
-import shared.ports.cqrs.QuerySide
+import shared.ports.cqrs.QuerySide.*
 import shared.domain.EventSourcing.*
 import shared.ports.persistence.Repository
 import shared.technologies.Kafka.Consumer
 
 class QuerySideKafkaAdapter[TId, T <: Entity[
   TId
-], Errors, C <: Command[
+], Error, C <: Command[
   TId,
   T,
-  Errors
+  Error
 ]](repo: Repository[CommandId, C], bootstrapServers: String, topic: String)(
     using ReadWriter[C]
-) extends QuerySide[TId, T]:
+) extends QuerySide[TId, T, Error, C]:
 
   Thread(() => {
     Consumer.autocloseable(bootstrapServers): consumer =>
@@ -49,3 +49,16 @@ class QuerySideKafkaAdapter[TId, T <: Entity[
       .groupBy(_.entityId)
       .map((id, commands) => commands.applyCommands())
       .flatMap(_.toList)
+
+  override def commands(): Iterable[C] =
+    repo.getAll()
+
+  override def commandResult(
+      id: CommandId
+  ): Either[Errors.CommandNotFound, Either[Error, Option[T]]] =
+    val commands = repo.getAll()
+    commands.find(_.id == id) match
+      case None => Left(Errors.CommandNotFound(id))
+      case Some(c) =>
+        val previous = commands.takeWhile(_.id != id)
+        Right(c(previous.applyCommands()))

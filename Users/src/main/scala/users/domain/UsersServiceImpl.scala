@@ -1,7 +1,7 @@
 package users.domain;
 
 import scala.concurrent.*
-import shared.domain.EventSourcing.CommandId
+import shared.domain.EventSourcing.*
 import users.domain.model.*;
 import users.domain.errors.*
 import users.ports.cqrs.*
@@ -20,5 +20,12 @@ class UsersServiceImpl(
 
   override def users(): Iterable[User] =
     usersQuerySide.getAll()
+
+  override def commandResult(
+      id: CommandId
+  ): Either[CommandNotFound, Either[UserCommandErrors, Option[User]]] =
+    usersQuerySide.commandResult(id) match
+      case Left(value)  => Left(CommandNotFound(value.id))
+      case Right(value) => Right(value)
 
   override def healthCheckError(): Option[String] = None
