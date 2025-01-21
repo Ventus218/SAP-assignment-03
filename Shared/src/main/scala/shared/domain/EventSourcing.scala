@@ -14,8 +14,6 @@ object EventSourcing:
     val id: CommandId
     val entityId: TId
 
-    type CommandResult[E2 <: Error] = Either[E2, Option[T]]
-
     /** Applies the command to an optional previous version of an entity.
       *
       * If you plan on using this method directly you should check that the
@@ -25,7 +23,7 @@ object EventSourcing:
       * @return
       *   The result of applying the command
       */
-    def apply(previous: Option[T]): CommandResult[Error]
+    def apply(previous: Option[T]): Either[Error, Option[T]]
 
   extension [TId, T <: Entity[TId]](it: Iterable[Command[TId, T, ?]])
     /** Applies in sequence all the commands which do not result in errors.

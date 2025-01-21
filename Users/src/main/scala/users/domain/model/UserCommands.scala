@@ -11,13 +11,15 @@ enum UserCommandErrors:
 object UserCommands:
   import UserCommandErrors.*
   case class Registered(id: CommandId, entityId: Username) extends UserCommands:
-    def apply(previous: Option[User]): CommandResult[UsernameAlreadyInUse] =
+    def apply(
+        previous: Option[User]
+    ): Either[UsernameAlreadyInUse, Option[User]] =
       previous match
         case None       => Right(Some(User(entityId)))
         case Some(user) => Left(UsernameAlreadyInUse(entityId))
 
   case class Delete(id: CommandId, entityId: Username) extends UserCommands:
-    def apply(previous: Option[User]): CommandResult[NotFound] =
+    def apply(previous: Option[User]): Either[NotFound, Option[User]] =
       previous match
         case None        => Left(NotFound(entityId))
         case Some(value) => Right(None)
