@@ -173,7 +173,13 @@ Two interface are provided:
 - *CommandSide* which allows to publish a command
 - *QuerySide* which allows to find a specific entity and getting all the entities.
 
-Two generic implementations are also provided to work with a Kafka backend.
+Two generic implementations are also provided to work with a Kafka backend:
+- The *CommandSideKafkaAdapter* simply publishes commands to a Kafka topic
+- The *QuerySideKafkaAdapter* works by starting a background thread which polls a Kafka topic and upon receiving commands it inserts them into an in-memory database.
+
+  This database is then a cache of all the commands and therefore it enables event sourcing of the entities.
+
+  A non-persistent database can be used because the actual store for every message is the event store, in fact upon starting the service the query side will get up to date fetching from Kafka every single command from the beginning.
 
 ## Possible replication
 For simplicity both the command and the query sides will be running inside the same process but if split they could be replicated independently.
