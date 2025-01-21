@@ -6,14 +6,11 @@ import scala.util.Try
 import scala.concurrent.ExecutionContextExecutor
 import akka.actor.typed.ActorSystem
 import akka.actor.typed.scaladsl.Behaviors
-import shared.technologies.persistence.InMemoryMapDatabaseImpl
 import users.domain.model.*
 import users.domain.UsersServiceImpl
 import users.adapters.presentation.HttpPresentationAdapter
 import users.adapters.*
-import users.adapters.cqrs.UsersQuerySideKafkaAdapter
-import adapters.cqrs.UserCommandsRepository
-import adapters.cqrs.UsersCommandSideKafkaAdapter
+import users.adapters.cqrs.*
 
 object Main extends App:
   given actorSystem: ActorSystem[Any] =
@@ -29,9 +26,7 @@ object Main extends App:
       "UsersService",
       kafkaTopic
     )
-  val userCommandsRepository = UserCommandsRepository(InMemoryMapDatabaseImpl())
   val querySideAdapter = UsersQuerySideKafkaAdapter(
-    userCommandsRepository,
     kafkaBootstrapServers,
     kafkaTopic
   )

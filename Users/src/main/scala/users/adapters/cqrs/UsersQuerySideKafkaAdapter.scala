@@ -9,7 +9,6 @@ import users.ports.cqrs.UsersQuerySide
 import UserCommandsSerialization.given
 
 class UsersQuerySideKafkaAdapter(
-    repo: Repository[CommandId, UserCommands],
     bootstrapServers: String,
     topic: String
 ) extends QuerySideKafkaAdapter[
@@ -17,5 +16,5 @@ class UsersQuerySideKafkaAdapter(
       User,
       UserCommandErrors,
       UserCommands
-    ](repo, bootstrapServers, topic),
+    ](bootstrapServers, topic),
       UsersQuerySide
