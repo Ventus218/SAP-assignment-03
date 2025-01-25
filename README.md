@@ -154,7 +154,7 @@ In general every microservice will have the following architecture:
 - Any data needed from other microservices will be consumed off the event store and materialised as described in the query side.
 
 ## Event sourcing and CQRS
-![CQRS and ES](./doc/diagrams/cqrs-es-domain-model)
+![CQRS and ES](./doc/diagrams/cqrs-es-domain-model.png)
 This is a generic implementation of the CQRS and ES patterns.
 
 ### Event sourcing
