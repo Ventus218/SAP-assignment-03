@@ -1,5 +1,8 @@
 package ebikes.ports;
 
+import scala.concurrent.*
+import shared.domain.EventSourcing.*
+import shared.ports.cqrs.QuerySide.Errors.*
 import ebikes.domain.model.*;
 import ebikes.domain.errors.*
 
@@ -13,13 +16,17 @@ trait EBikesService:
       id: EBikeId,
       location: V2D,
       direction: V2D
-  ): Either[EBikeIdAlreadyInUse, EBike]
+  )(using ExecutionContext): Future[CommandId]
 
   def updatePhisicalData(
       eBikeId: EBikeId,
       location: Option[V2D],
       direction: Option[V2D],
       speed: Option[Double]
-  ): Option[EBike]
+  )(using ExecutionContext): Future[CommandId]
+
+  def commandResult(
+      id: CommandId
+  ): Either[CommandNotFound, Either[EBikeCommandErrors, Option[EBike]]]
 
   def healthCheckError(): Option[String]

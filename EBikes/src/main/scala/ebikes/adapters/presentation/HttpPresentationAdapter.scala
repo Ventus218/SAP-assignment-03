@@ -1,7 +1,7 @@
 package ebikes.adapters.presentation
 
-import scala.concurrent.Future
-import akka.actor.typed.ActorSystem
+import scala.concurrent.*
+import akka.actor.typed.*
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.Http.ServerBinding
 import akka.http.scaladsl.model.HttpEntity
@@ -13,6 +13,7 @@ import spray.json.DefaultJsonProtocol.*
 import ebikes.domain.model.*
 import ebikes.ports.EBikesService
 import ebikes.adapters.presentation.dto.*
+import ebikes.domain.model.EBikeCommandErrors.*
 import shared.adapters.presentation.HealthCheckError
 
 object HttpPresentationAdapter:
@@ -25,12 +26,18 @@ object HttpPresentationAdapter:
     UpdateEBikePhisicalDataDTO.apply
   )
   given RootJsonFormat[HealthCheckError] = jsonFormat1(HealthCheckError.apply)
+  import shared.domain.EventSourcing.CommandId
+  given RootJsonFormat[CommandId] = jsonFormat1(CommandId.apply)
 
   def startHttpServer(
       eBikesService: EBikesService,
       host: String,
       port: Int
-  )(using ActorSystem[Any]): Future[ServerBinding] =
+  )(using system: ActorSystem[Any]): Future[ServerBinding] =
+    // For IO bounded computations in the service
+    given ExecutionContext =
+      system.dispatchers.lookup(DispatcherSelector.blocking())
+
     val route =
       concat(
         pathPrefix("ebikes"):
@@ -40,11 +47,11 @@ object HttpPresentationAdapter:
             ,
             (post & pathEnd):
               entity(as[RegisterEBikeDTO]) { dto =>
-                eBikesService
-                  .register(dto.id, dto.location, dto.direction) match
-                  case Left(value) =>
-                    complete(Conflict, "EBike id already in use")
-                  case Right(value) => complete(value)
+                onSuccess(
+                  eBikesService.register(dto.id, dto.location, dto.direction)
+                ) { res =>
+                  complete(res)
+                }
               }
             ,
             pathPrefix(Segment): segment =>
@@ -57,16 +64,30 @@ object HttpPresentationAdapter:
                 ,
                 (patch & pathEnd):
                   entity(as[UpdateEBikePhisicalDataDTO]): dto =>
-                    eBikesService.updatePhisicalData(
-                      eBikeId,
-                      dto.location,
-                      dto.direction,
-                      dto.speed
-                    ) match
-                      case None =>
-                        complete(NotFound, s"EBike $segment not found")
-                      case Some(eBike) => complete(eBike)
+                    ??? // TODO: implement
+                    // eBikesService.updatePhisicalData(
+                    //   eBikeId,
+                    //   dto.location,
+                    //   dto.direction,
+                    //   dto.speed
+                    // ) match
+                    //   case None =>
+                    //     complete(NotFound, s"EBike $segment not found")
+                    //   case Some(eBike) => complete(eBike)
               )
+            ,
+            (get & path("commands" / Segment)): segment =>
+              eBikesService.commandResult(CommandId(segment)) match
+                case Left(value) => complete(NotFound)
+                case Right(value) =>
+                  value match
+                    case Right(value) => complete(value)
+                    case Left(value) =>
+                      value match
+                        case EBikeIdAlreadyInUse(id) =>
+                          complete(Conflict, s"$id id already in use")
+                  // case UserNotFound(username) =>
+                  //   complete(NotFound)
           )
         ,
         path("healthCheck"):

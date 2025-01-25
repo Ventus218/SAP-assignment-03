@@ -1,35 +1,41 @@
 package ebikes.domain;
 
+import scala.concurrent.*
+import shared.domain.EventSourcing.*
+import shared.ports.cqrs.QuerySide.Errors.*
 import ebikes.domain.model.*;
-import ebikes.ports.persistence.EBikesRepository;
 import ebikes.domain.errors.*
+import ebikes.ports.persistence.EBikesRepository;
 import ebikes.ports.EBikesService
+import ebikes.ports.cqrs.*
 
-class EBikesServiceImpl(private val eBikesRepository: EBikesRepository)
-    extends EBikesService:
+class EBikesServiceImpl(
+    private val commandSide: EBikesCommandSide,
+    private val querySide: EBikesQuerySide
+) extends EBikesService:
+  private val eBikesRepository: EBikesRepository = null // TODO: remove
 
   override def register(
       id: EBikeId,
       location: V2D,
       direction: V2D
-  ): Either[EBikeIdAlreadyInUse, EBike] =
-    val eBike = EBike(id, location, direction, 0)
-    eBikesRepository.insert(id, eBike) match
-      case Left(value)  => Left(EBikeIdAlreadyInUse(id))
-      case Right(value) => Right(eBike)
+  )(using ExecutionContext): Future[CommandId] =
+    val command =
+      EBikeCommands.Register(CommandId.random(), id, location, direction)
+    commandSide.publish(command).map(_ => command.id)
 
   override def find(id: EBikeId): Option[EBike] =
-    eBikesRepository.find(id)
+    querySide.find(id)
 
   override def eBikes(): Iterable[EBike] =
-    eBikesRepository.getAll()
+    querySide.getAll()
 
   override def updatePhisicalData(
       eBikeId: EBikeId,
       location: Option[V2D],
       direction: Option[V2D],
       speed: Option[Double]
-  ): Option[EBike] =
+  )(using ExecutionContext): Future[CommandId] =
     eBikesRepository
       .update(
         eBikeId,
@@ -40,5 +46,11 @@ class EBikesServiceImpl(private val eBikesRepository: EBikesRepository)
           eBike.copy(eBikeId, newLocation, newDirection, newSpeed)
       )
       .toOption
+    ???
+
+  override def commandResult(
+      id: CommandId
+  ): Either[CommandNotFound, Either[EBikeCommandErrors, Option[EBike]]] =
+    querySide.commandResult(id)
 
   def healthCheckError(): Option[String] = None
