@@ -64,30 +64,31 @@ object HttpPresentationAdapter:
                 ,
                 (patch & pathEnd):
                   entity(as[UpdateEBikePhisicalDataDTO]): dto =>
-                    ??? // TODO: implement
-                    // eBikesService.updatePhisicalData(
-                    //   eBikeId,
-                    //   dto.location,
-                    //   dto.direction,
-                    //   dto.speed
-                    // ) match
-                    //   case None =>
-                    //     complete(NotFound, s"EBike $segment not found")
-                    //   case Some(eBike) => complete(eBike)
+                    onSuccess(
+                      eBikesService.updatePhisicalData(
+                        eBikeId,
+                        dto.location,
+                        dto.direction,
+                        dto.speed
+                      )
+                    ) { res =>
+                      complete(res)
+                    }
               )
             ,
             (get & path("commands" / Segment)): segment =>
               eBikesService.commandResult(CommandId(segment)) match
-                case Left(value) => complete(NotFound)
+                case Left(value) =>
+                  complete(NotFound, s"Command $segment not found, try again?")
                 case Right(value) =>
                   value match
                     case Right(value) => complete(value)
                     case Left(value) =>
                       value match
                         case EBikeIdAlreadyInUse(id) =>
-                          complete(Conflict, s"$id id already in use")
-                  // case UserNotFound(username) =>
-                  //   complete(NotFound)
+                          complete(Conflict, s"${id.value} id already in use")
+                        case EBikeNotFound(id) =>
+                          complete(NotFound, s"EBike ${id.value} not found")
           )
         ,
         path("healthCheck"):

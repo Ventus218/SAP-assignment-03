@@ -13,7 +13,6 @@ class EBikesServiceImpl(
     private val commandSide: EBikesCommandSide,
     private val querySide: EBikesQuerySide
 ) extends EBikesService:
-  private val eBikesRepository: EBikesRepository = null // TODO: remove
 
   override def register(
       id: EBikeId,
@@ -36,17 +35,15 @@ class EBikesServiceImpl(
       direction: Option[V2D],
       speed: Option[Double]
   )(using ExecutionContext): Future[CommandId] =
-    eBikesRepository
-      .update(
+    val command =
+      EBikeCommands.UpdatePhisicalData(
+        CommandId.random(),
         eBikeId,
-        eBike =>
-          val newLocation = location.getOrElse(eBike.location)
-          val newDirection = direction.getOrElse(eBike.direction)
-          val newSpeed = speed.getOrElse(eBike.speed)
-          eBike.copy(eBikeId, newLocation, newDirection, newSpeed)
+        location,
+        direction,
+        speed
       )
-      .toOption
-    ???
+    commandSide.publish(command).map(_ => command.id)
 
   override def commandResult(
       id: CommandId
