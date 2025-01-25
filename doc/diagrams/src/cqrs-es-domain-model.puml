@@ -26,9 +26,11 @@ package ports.cqrs {
     interface CommandSide<TId, T extends Entity<TId>, Error, C extends Command<TId, T, Error>> {
         publish(command: C)(using ExecutionContext): Future<Unit>
     }
-    interface QuerySide<TId, T extends Entity<TId>>{
+    interface QuerySide<TId, T extends Entity<TId>, Error, C extends<TId, T, Error>>{
         find(id: TId): Option<T>
         getAll(): Iterable<T>
+        commands(): Iterable<C>
+        commandResult(id: CommandId): Either<CommandNotFound, Either<Error, Option<T>>>
     }
 }
 
