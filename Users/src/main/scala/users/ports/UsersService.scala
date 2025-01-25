@@ -2,8 +2,8 @@ package users.ports;
 
 import scala.concurrent.*
 import users.domain.model.*;
-import users.domain.errors.*
 import shared.domain.EventSourcing.*
+import shared.ports.cqrs.QuerySide.Errors.*
 
 trait UsersService:
 

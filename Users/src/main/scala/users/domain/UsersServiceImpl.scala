@@ -2,8 +2,8 @@ package users.domain;
 
 import scala.concurrent.*
 import shared.domain.EventSourcing.*
+import shared.ports.cqrs.QuerySide.Errors.*
 import users.domain.model.*;
-import users.domain.errors.*
 import users.ports.cqrs.*
 import users.ports.UsersService
 
