@@ -58,5 +58,6 @@ class QuerySideKafkaAdapter[TId, T <: Entity[
     commands.find(_.id == id) match
       case None => Left(Errors.CommandNotFound(id))
       case Some(c) =>
-        val previous = commands.takeWhile(_.id != id)
+        val previous =
+          commands.takeWhile(_.id != id).filter(_.entityId == c.entityId)
         Right(c(previous.applyCommands()))
