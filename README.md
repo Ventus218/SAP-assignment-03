@@ -181,6 +181,13 @@ Two generic implementations are also provided to work with a Kafka backend:
 
   A non-persistent database can be used because the actual store for every message is the event store, in fact upon starting the service the query side will get up to date fetching from Kafka every single command from the beginning.
 
+### Example of usage (Users microservice)
+![Users microservice domain model](./doc/diagrams/users-microservice-domain-model.png)
+
+UserCommands and UserCommandErrors were defined which represents respectively all the possible commands/events that a user can recevie and all the possible errors that could result from applying those commands.
+
+The UsersService uses a UsersCommandSide and a QueryCommandSide which will then be implemented by their Kafka adapters.
+
 ## Possible replication
 For simplicity both the command and the query sides will be running inside the same process but if split they could be replicated independently.
 
