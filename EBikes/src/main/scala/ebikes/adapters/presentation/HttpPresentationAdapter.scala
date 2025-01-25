@@ -11,7 +11,7 @@ import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import spray.json.RootJsonFormat
 import spray.json.DefaultJsonProtocol.*
 import ebikes.domain.model.*
-import ebikes.domain.EBikesService
+import ebikes.ports.EBikesService
 import ebikes.adapters.presentation.dto.*
 import shared.adapters.presentation.HealthCheckError
 

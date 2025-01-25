@@ -3,6 +3,7 @@ package ebikes.domain;
 import ebikes.domain.model.*;
 import ebikes.ports.persistence.EBikesRepository;
 import ebikes.domain.errors.*
+import ebikes.ports.EBikesService
 
 class EBikesServiceImpl(private val eBikesRepository: EBikesRepository)
     extends EBikesService:

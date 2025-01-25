@@ -1,4 +1,4 @@
-package ebikes.domain;
+package ebikes.ports;
 
 import ebikes.domain.model.*;
 import ebikes.domain.errors.*
