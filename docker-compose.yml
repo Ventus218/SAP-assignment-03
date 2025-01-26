@@ -13,7 +13,7 @@ x-common_healthcheck: &common_healthcheck
     timeout: 5s
     retries: 2
   restart: unless-stopped
-  
+
 services:
   ebikes:
     build:
@@ -72,6 +72,7 @@ services:
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
       KAFKA_NUM_PARTITIONS: 3
       KAFKA_LOG_RETENTION_MS: -1 # Infinite log retention
+      KAFKA_LOG_MESSAGE_TIMESTAMP_TYPE: LogAppendTime # Timestamps are set by brokers an not producers
       # KAFKA_ALLOW_AUTO_CREATE_TOPICS: false
     healthcheck:
       test: /opt/kafka/bin/kafka-cluster.sh cluster-id --bootstrap-server kafka:9092 || exit 1
