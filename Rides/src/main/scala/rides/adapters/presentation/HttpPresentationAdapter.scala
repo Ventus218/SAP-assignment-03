@@ -47,30 +47,28 @@ object HttpPresentationAdapter:
               complete(ridesService.activeRides().toArray)
             ,
             (path("availableEBikes") & get):
-              onSuccess(ridesService.availableEBikes()): availableEBikes =>
-                complete(availableEBikes.toArray)
+              complete(ridesService.availableEBikes().toArray)
             ,
             (post & pathEnd):
               entity(as[StartRideDTO]) { dto =>
-                onSuccess(ridesService.startRide(dto.eBikeId, dto.username)):
-                  _ match
-                    case Left(UserAlreadyOnARide(username)) =>
-                      complete(
-                        Conflict,
-                        s"User ${username.value} already riding"
-                      )
-                    case Left(EBikeAlreadyOnARide(eBikeId)) =>
-                      complete(
-                        Conflict,
-                        s"EBike ${eBikeId.value} already riding"
-                      )
-                    case Left(UserDoesNotExist(user)) =>
-                      complete(NotFound, s"User ${user.value} does not exists")
-                    case Left(EBikeDoesNotExist(id)) =>
-                      complete(NotFound, s"EBike ${id.value} does not exists")
-                    case Left(FailureInOtherService(msg)) =>
-                      complete(InternalServerError, msg)
-                    case Right(value) => complete(value)
+                ridesService.startRide(dto.eBikeId, dto.username) match
+                  case Left(UserAlreadyOnARide(username)) =>
+                    complete(
+                      Conflict,
+                      s"User ${username.value} already riding"
+                    )
+                  case Left(EBikeAlreadyOnARide(eBikeId)) =>
+                    complete(
+                      Conflict,
+                      s"EBike ${eBikeId.value} already riding"
+                    )
+                  case Left(UserDoesNotExist(user)) =>
+                    complete(NotFound, s"User ${user.value} does not exists")
+                  case Left(EBikeDoesNotExist(id)) =>
+                    complete(NotFound, s"EBike ${id.value} does not exists")
+                  case Left(FailureInOtherService(msg)) =>
+                    complete(InternalServerError, msg)
+                  case Right(value) => complete(value)
               }
             ,
             path(Segment): rideId =>
@@ -81,10 +79,9 @@ object HttpPresentationAdapter:
                     case Some(value) => complete(value)
                 ,
                 (put & pathEnd):
-                  onSuccess(ridesService.endRide(RideId(rideId))):
-                    _ match
-                      case Left(value)  => complete(NotFound, "Ride not found")
-                      case Right(value) => complete(value)
+                  ridesService.endRide(RideId(rideId)) match
+                    case Left(value)  => complete(NotFound, "Ride not found")
+                    case Right(value) => complete(value)
               )
           )
         ,

@@ -1,6 +1,5 @@
 package rides.ports;
 
-import scala.concurrent.Future
 import rides.domain.model.*;
 import rides.domain.errors.*
 
@@ -18,10 +17,10 @@ trait RidesService:
   def startRide(
       eBikeId: EBikeId,
       username: Username
-  ): Future[Either[StartRideError, Ride]]
+  ): Either[StartRideError, Ride]
 
-  def endRide(id: RideId): Future[Either[RideNotFound, Ride]]
+  def endRide(id: RideId): Either[RideNotFound, Ride]
 
-  def availableEBikes(): Future[Iterable[EBikeId]]
+  def availableEBikes(): Iterable[EBikeId]
 
   def healthCheckError(): Option[String]
