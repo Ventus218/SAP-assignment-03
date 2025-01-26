@@ -1,7 +1,6 @@
 package ebikes.domain.model
 
-import shared.domain.EventSourcing.Command
-import shared.domain.EventSourcing.CommandId
+import shared.domain.EventSourcing.*
 
 sealed trait EBikeCommands
     extends Command[EBikeId, EBike, EBikeCommandErrors, Nothing]
@@ -21,12 +20,14 @@ object EBikeCommands:
       timestamp: Option[Long] = None
   ) extends EBikeCommands:
 
-    override def apply(
-        previous: Option[EBike],
-        env: Option[Nothing] = None
-    ): Either[EBikeIdAlreadyInUse, Option[EBike]] =
-      previous match
-        case None        => Right(Some(EBike(entityId, location, direction, 0)))
+    override def apply(entities: Map[EBikeId, EBike])(using
+        Option[Environment[Nothing]]
+    ): Either[EBikeIdAlreadyInUse, Map[EBikeId, EBike]] =
+      entities.get(entityId) match
+        case None =>
+          Right(
+            entities + (entityId -> EBike(entityId, location, direction, 0))
+          )
         case Some(value) => Left(EBikeIdAlreadyInUse(entityId))
 
   case class UpdatePhisicalData(
@@ -38,22 +39,22 @@ object EBikeCommands:
       timestamp: Option[Long] = None
   ) extends EBikeCommands:
 
-    override def apply(
-        previous: Option[EBike],
-        env: Option[Nothing] = None
-    ): Either[EBikeNotFound, Option[EBike]] =
-      previous match
+    override def apply(entities: Map[EBikeId, EBike])(using
+        Option[Environment[Nothing]]
+    ): Either[EBikeNotFound, Map[EBikeId, EBike]] =
+      entities.get(entityId) match
         case None => Left(EBikeNotFound(entityId))
         case Some(value) =>
           val newLocation = location.getOrElse(value.location)
           val newDirection = direction.getOrElse(value.direction)
           val newSpeed = speed.getOrElse(value.speed)
           Right(
-            Some(
-              value.copy(
-                location = newLocation,
-                direction = newDirection,
-                speed = newSpeed
-              )
+            entities + (
+              entityId ->
+                value.copy(
+                  location = newLocation,
+                  direction = newDirection,
+                  speed = newSpeed
+                )
             )
           )

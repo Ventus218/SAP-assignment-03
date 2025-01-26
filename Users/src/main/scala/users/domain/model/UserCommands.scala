@@ -16,12 +16,11 @@ object UserCommands:
       entityId: Username,
       timestamp: Option[Long] = None
   ) extends UserCommands:
-    def apply(
-        previous: Option[User],
-        env: Option[Nothing] = None
-    ): Either[UsernameAlreadyInUse, Option[User]] =
-      previous match
-        case None       => Right(Some(User(entityId)))
+    def apply(entities: Map[Username, User])(using
+        Option[Environment[Nothing]]
+    ): Either[UsernameAlreadyInUse, Map[Username, User]] =
+      entities.get(entityId) match
+        case None       => Right(entities.updated(entityId, User(entityId)))
         case Some(user) => Left(UsernameAlreadyInUse(entityId))
 
   case class Delete(
@@ -29,10 +28,9 @@ object UserCommands:
       entityId: Username,
       timestamp: Option[Long] = None
   ) extends UserCommands:
-    def apply(
-        previous: Option[User],
-        env: Option[Nothing] = None
-    ): Either[NotFound, Option[User]] =
-      previous match
+    def apply(entities: Map[Username, User])(using
+        Option[Environment[Nothing]]
+    ): Either[NotFound, Map[Username, User]] =
+      entities.get(entityId) match
         case None        => Left(NotFound(entityId))
-        case Some(value) => Right(None)
+        case Some(value) => Right(entities.removed(entityId))

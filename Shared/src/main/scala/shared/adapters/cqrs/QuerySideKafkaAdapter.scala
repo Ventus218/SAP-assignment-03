@@ -40,32 +40,30 @@ class QuerySideKafkaAdapter[TId, T <: Entity[
           if !commands.isEmpty then cache = cache ++ commands
     })
 
-  override def find(id: TId, atTimestamp: Long): Option[T] =
+  override def find(id: TId, atTimestamp: Long)(using
+      Option[Environment[Env]]
+  ): Option[T] =
     cache
       .takeWhile(_.timestamp.get <= atTimestamp)
-      .filter(_.entityId == id)
       .applyCommands()
+      .get(id)
 
-  override def getAll(atTimestamp: Long): Iterable[T] =
+  override def getAll(atTimestamp: Long)(using Option[Environment[Env]]): Iterable[T] =
     cache
       .takeWhile(_.timestamp.get <= atTimestamp)
-      .groupBy(_.entityId)
-      .map((id, commands) => commands.applyCommands())
-      .flatMap(_.toList)
+      .applyCommands()
+      .values
 
   override def commands(atTimestamp: Long): Iterable[C] =
     cache
       .takeWhile(_.timestamp.get <= atTimestamp)
 
-  override def commandResult(
-      id: CommandId,
-      atTimestamp: Long
-  ): Either[Errors.CommandNotFound, Either[Error, Option[T]]] =
+  override def commandResult(id: CommandId)(using
+      Option[Environment[Env]]
+  ): Either[Errors.CommandNotFound, Either[Error, Map[TId, T]]] =
     val commands = cache
-      .takeWhile(_.timestamp.get <= atTimestamp)
     commands.find(_.id == id) match
       case None => Left(Errors.CommandNotFound(id))
       case Some(c) =>
-        val previous =
-          commands.takeWhile(_.id != id).filter(_.entityId == c.entityId)
-        Right(c(previous.applyCommands()))
+        val previousState = commands.takeWhile(_.id != id).applyCommands()
+        Right(c(previousState))

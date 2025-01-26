@@ -4,6 +4,9 @@ object EventSourcing:
   trait Entity[Id]:
     def id: Id
 
+  trait Environment[+T]:
+    def at(timestamp: Long): T
+
   case class CommandId(value: String)
   object CommandId:
     def random(): CommandId =
@@ -18,40 +21,21 @@ object EventSourcing:
       */
     val timestamp: Option[Long]
 
-    /** Applies the command to an optional previous version of an entity.
-      *
-      * If you plan on using this method directly you should check that the
-      * entity id and the command's entityId are matching
-      *
-      * @param previous
-      * @param env
-      *   An optional enviroment to access other informations
+    /** Applies the command to the current state of entities
       * @return
-      *   The result of applying the command
+      *   Either an error or the new set of entities
       */
-    def apply(
-        previous: Option[T],
-        env: Option[Env] = None
-    ): Either[Error, Option[T]]
+    def apply(entities: Map[TId, T])(using
+        Option[Environment[Env]]
+    ): Either[Error, Map[TId, T]]
 
   extension [TId, T <: Entity[TId], Env](it: Iterable[Command[TId, T, ?, Env]])
     /** Applies in sequence all the commands which do not result in errors.
       *
-      * All the commands' entityIds should match, if not the first one is taken
-      * as reference and others non maching are ignored.
-      *
-      * @param env
-      *   An optional enviroment to access other informations
       * @return
-      *   The event sourced entity or None if the entity is not created by any
-      *   command
+      *   The new set of entities
       */
-    def applyCommands(env: Option[Env] = None): Option[T] =
-      it.headOption match
-        case None => None
-        case Some(head) =>
-          it.tail
-            .filter(_.entityId == head.entityId)
-            .foldLeft(head(None).toOption.flatten)((e, command) =>
-              command(e, env).getOrElse(e)
-            )
+    def applyCommands()(using Option[Environment[Env]]): Map[TId, T] =
+      it.foldLeft(Map[TId, T]())((entities, command) =>
+        command(entities).getOrElse(entities)
+      )

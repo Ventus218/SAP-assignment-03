@@ -14,6 +14,8 @@ class EBikesServiceImpl(
     private val querySide: EBikesQuerySide
 ) extends EBikesService:
 
+  given Option[Environment[Nothing]] = None
+
   override def register(
       id: EBikeId,
       location: V2D,
@@ -48,6 +50,11 @@ class EBikesServiceImpl(
   override def commandResult(
       id: CommandId
   ): Either[CommandNotFound, Either[EBikeCommandErrors, Option[EBike]]] =
-    querySide.commandResult(id)
+    querySide
+      .commandResult(id)
+      .map(entities =>
+        val command = querySide.commands().find(_.id == id).get
+        entities.map(_.get(command.entityId))
+      )
 
   def healthCheckError(): Option[String] = None

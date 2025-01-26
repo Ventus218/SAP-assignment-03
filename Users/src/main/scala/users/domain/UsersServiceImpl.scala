@@ -12,6 +12,8 @@ class UsersServiceImpl(
     private val usersQuerySide: UsersQuerySide
 ) extends UsersService:
 
+  given Option[Environment[Nothing]] = None
+
   override def registerUser(username: Username)(using
       ExecutionContext
   ): Future[CommandId] =
@@ -25,7 +27,9 @@ class UsersServiceImpl(
       id: CommandId
   ): Either[CommandNotFound, Either[UserCommandErrors, Option[User]]] =
     usersQuerySide.commandResult(id) match
-      case Left(value)  => Left(CommandNotFound(value.id))
-      case Right(value) => Right(value)
+      case Left(value) => Left(CommandNotFound(value.id))
+      case Right(value) =>
+        val command = usersQuerySide.commands().find(_.id == id).get
+        Right(value.map(_.get(command.entityId)))
 
   override def healthCheckError(): Option[String] = None
