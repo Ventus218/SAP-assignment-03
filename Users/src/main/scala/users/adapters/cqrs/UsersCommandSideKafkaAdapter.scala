@@ -16,6 +16,7 @@ class UsersCommandSideKafkaAdapter(
       Username,
       User,
       UserCommandErrors,
+      Nothing,
       UserCommands
     ](
       bootstrapServers,

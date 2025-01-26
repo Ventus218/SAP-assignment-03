@@ -15,6 +15,7 @@ class UsersQuerySideKafkaAdapter(
       Username,
       User,
       UserCommandErrors,
+      Nothing,
       UserCommands
     ](bootstrapServers, topic),
       UsersQuerySide

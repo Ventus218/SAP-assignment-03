@@ -3,7 +3,8 @@ package ebikes.domain.model
 import shared.domain.EventSourcing.Command
 import shared.domain.EventSourcing.CommandId
 
-sealed trait EBikeCommands extends Command[EBikeId, EBike, EBikeCommandErrors]
+sealed trait EBikeCommands
+    extends Command[EBikeId, EBike, EBikeCommandErrors, Nothing]
 
 enum EBikeCommandErrors:
   case EBikeIdAlreadyInUse(id: EBikeId)
@@ -20,7 +21,8 @@ object EBikeCommands:
   ) extends EBikeCommands:
 
     override def apply(
-        previous: Option[EBike]
+        previous: Option[EBike],
+        env: Option[Nothing] = None
     ): Either[EBikeIdAlreadyInUse, Option[EBike]] =
       previous match
         case None        => Right(Some(EBike(entityId, location, direction, 0)))
@@ -35,7 +37,8 @@ object EBikeCommands:
   ) extends EBikeCommands:
 
     override def apply(
-        previous: Option[EBike]
+        previous: Option[EBike],
+        env: Option[Nothing] = None
     ): Either[EBikeNotFound, Option[EBike]] =
       previous match
         case None => Left(EBikeNotFound(entityId))

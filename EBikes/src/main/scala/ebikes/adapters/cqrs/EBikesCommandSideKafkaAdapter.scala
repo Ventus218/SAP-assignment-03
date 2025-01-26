@@ -16,6 +16,7 @@ class EBikesCommandSideKafkaAdapter(
       EBikeId,
       EBike,
       EBikeCommandErrors,
+      Nothing,
       EBikeCommands
     ](
       bootstrapServers,

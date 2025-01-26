@@ -4,4 +4,10 @@ import shared.ports.cqrs.QuerySide.*
 import ebikes.domain.model.*
 
 trait EBikesQuerySide
-    extends QuerySide[EBikeId, EBike, EBikeCommandErrors, EBikeCommands]
+    extends QuerySide[
+      EBikeId,
+      EBike,
+      EBikeCommandErrors,
+      Nothing,
+      EBikeCommands
+    ]

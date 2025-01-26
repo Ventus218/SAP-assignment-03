@@ -10,7 +10,7 @@ object EventSourcing:
       import java.util.UUID
       CommandId(UUID.randomUUID().toString())
 
-  trait Command[TId, T <: Entity[TId], Error]:
+  trait Command[TId, T <: Entity[TId], Error, Env]:
     val id: CommandId
     val entityId: TId
 
@@ -20,27 +20,34 @@ object EventSourcing:
       * entity id and the command's entityId are matching
       *
       * @param previous
+      * @param env
+      *   An optional enviroment to access other informations
       * @return
       *   The result of applying the command
       */
-    def apply(previous: Option[T]): Either[Error, Option[T]]
+    def apply(
+        previous: Option[T],
+        env: Option[Env] = None
+    ): Either[Error, Option[T]]
 
-  extension [TId, T <: Entity[TId]](it: Iterable[Command[TId, T, ?]])
+  extension [TId, T <: Entity[TId], Env](it: Iterable[Command[TId, T, ?, Env]])
     /** Applies in sequence all the commands which do not result in errors.
       *
       * All the commands' entityIds should match, if not the first one is taken
       * as reference and others non maching are ignored.
       *
+      * @param env
+      *   An optional enviroment to access other informations
       * @return
       *   The event sourced entity or None if the entity is not created by any
       *   command
       */
-    def applyCommands(): Option[T] =
+    def applyCommands(env: Option[Env] = None): Option[T] =
       it.headOption match
         case None => None
         case Some(head) =>
           it.tail
             .filter(_.entityId == head.entityId)
             .foldLeft(head(None).toOption.flatten)((e, command) =>
-              command(e).getOrElse(e)
+              command(e, env).getOrElse(e)
             )

@@ -8,12 +8,12 @@ import upickle.default.*
 
 abstract class CommandSideKafkaAdapter[TId, T <: Entity[
   TId
-], Error, C <: Command[TId, T, Error]](
+], Error, Env, C <: Command[TId, T, Error, Env]](
     bootstrapServers: String,
     clientId: String,
     topic: String
 )(using ReadWriter[C])
-    extends CommandSide[TId, T, Error, C]:
+    extends CommandSide[TId, T, Error, Env, C]:
 
   lazy val producer = Producer(bootstrapServers, clientId)
 

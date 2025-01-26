@@ -10,13 +10,14 @@ import shared.technologies.Kafka.Consumer
 
 class QuerySideKafkaAdapter[TId, T <: Entity[
   TId
-], Error, C <: Command[
+], Error, Env, C <: Command[
   TId,
   T,
-  Error
+  Error,
+  Env
 ]](bootstrapServers: String, topic: String)(using
     ReadWriter[C]
-) extends QuerySide[TId, T, Error, C]:
+) extends QuerySide[TId, T, Error, Env, C]:
 
   private var _cache = IndexedSeq[C]()
   private def cache = synchronized(_cache)

@@ -7,7 +7,12 @@ object QuerySide:
     case CommandNotFound(id: CommandId)
   import Errors.*
 
-  trait QuerySide[TId, T <: Entity[TId], Error, C <: Command[TId, T, Error]]:
+  trait QuerySide[TId, T <: Entity[TId], Error, Env, C <: Command[
+    TId,
+    T,
+    Error,
+    Env
+  ]]:
     def find(id: TId): Option[T]
     def getAll(): Iterable[T]
 
