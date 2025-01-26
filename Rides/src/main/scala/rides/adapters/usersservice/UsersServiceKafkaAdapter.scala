@@ -17,7 +17,7 @@ class UsersServiceKafkaAdapter(bootstrapServers: String, topic: String)
   private case class Registered(
       id: CommandId,
       entityId: Username,
-      timestamp: Option[Long]
+      timestamp: Option[Long] = None
   ) derives ReadWriter
 
   private var _cache = Seq[Registered]()
@@ -36,7 +36,10 @@ class UsersServiceKafkaAdapter(bootstrapServers: String, topic: String)
             )
             .takeWhile(_.nonEmpty)
             .flatten
-            .map(r => read[Registered](r.value()))
+            .map(r =>
+              read[Registered](r.value())
+                .copy(timestamp = Some(r.timestamp()))
+            )
             .toSeq
           if !commands.isEmpty then cache = cache ++ commands
     })
