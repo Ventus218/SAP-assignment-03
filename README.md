@@ -1,7 +1,5 @@
 # Assignment #03 - Software Architecture and Platforms - a.y. 2024-2025
 
-v0.9.0-20241209
-
 <!-- toc -->
 
 - [Usage](#usage)
@@ -23,7 +21,9 @@ v0.9.0-20241209
 
 <!-- tocstop -->
 
-**Description** 
+**Description**
+
+v0.9.0-20241209
 
 - Develop a solution of the "EBike application" based on an event-driven microservices architecture, applying the Event Sourcing pattern where considered useful.
 
