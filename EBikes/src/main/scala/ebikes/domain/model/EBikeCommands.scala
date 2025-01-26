@@ -17,7 +17,8 @@ object EBikeCommands:
       id: CommandId,
       entityId: EBikeId,
       location: V2D,
-      direction: V2D
+      direction: V2D,
+      timestamp: Option[Long] = None
   ) extends EBikeCommands:
 
     override def apply(
@@ -33,7 +34,8 @@ object EBikeCommands:
       entityId: EBikeId,
       location: Option[V2D],
       direction: Option[V2D],
-      speed: Option[Double]
+      speed: Option[Double],
+      timestamp: Option[Long] = None
   ) extends EBikeCommands:
 
     override def apply(

@@ -40,22 +40,29 @@ class QuerySideKafkaAdapter[TId, T <: Entity[
           if !commands.isEmpty then cache = cache ++ commands
     })
 
-  override def find(id: TId): Option[T] =
-    cache.filter(_.entityId == id).applyCommands()
-
-  override def getAll(): Iterable[T] =
+  override def find(id: TId, atTimestamp: Long): Option[T] =
     cache
+      .takeWhile(_.timestamp.get <= atTimestamp)
+      .filter(_.entityId == id)
+      .applyCommands()
+
+  override def getAll(atTimestamp: Long): Iterable[T] =
+    cache
+      .takeWhile(_.timestamp.get <= atTimestamp)
       .groupBy(_.entityId)
       .map((id, commands) => commands.applyCommands())
       .flatMap(_.toList)
 
-  override def commands(): Iterable[C] =
+  override def commands(atTimestamp: Long): Iterable[C] =
     cache
+      .takeWhile(_.timestamp.get <= atTimestamp)
 
   override def commandResult(
-      id: CommandId
+      id: CommandId,
+      atTimestamp: Long
   ): Either[Errors.CommandNotFound, Either[Error, Option[T]]] =
     val commands = cache
+      .takeWhile(_.timestamp.get <= atTimestamp)
     commands.find(_.id == id) match
       case None => Left(Errors.CommandNotFound(id))
       case Some(c) =>

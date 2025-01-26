@@ -14,14 +14,15 @@ class EBikesServiceKafkaAdapter(bootstrapServers: String, topic: String)
   given ReadWriter[CommandId] = ReadWriter.derived
   given ReadWriter[EBikeId] = ReadWriter.derived
   // This message definition is trimmed to the bare minimum
-  private case class Register(id: CommandId, entityId: EBikeId)
-      derives ReadWriter
+  private case class Register(
+      id: CommandId,
+      entityId: EBikeId,
+      timestamp: Option[Long]
+  ) derives ReadWriter
 
-  private var _existingEBikes = Set[EBikeId]()
-  private def existingEBikes = synchronized(_existingEBikes)
-  private def existingEBikes_=(v: Set[EBikeId]) = synchronized {
-    _existingEBikes = v
-  }
+  private var _cache = Seq[Register]()
+  private def cache = synchronized(_cache)
+  private def cache_=(v: Seq[Register]) = synchronized { _cache = v }
 
   Thread.ofVirtual
     .name("ebikes-service-consumer")
@@ -29,19 +30,25 @@ class EBikesServiceKafkaAdapter(bootstrapServers: String, topic: String)
       Consumer.autocloseable(bootstrapServers): consumer =>
         consumer.subscribe(List(topic).asJava)
         while true do
-          val newBikes = Iterator
+          val commands = Iterator
             .continually(
               consumer.poll(java.time.Duration.ofMillis(20)).asScala
             )
             .takeWhile(_.nonEmpty)
             .flatten
             .map(r => read[Register](r.value()))
-            .map(_.entityId)
             .toSeq
-          if !newBikes.isEmpty then existingEBikes = existingEBikes ++ newBikes
+          if !commands.isEmpty then cache = cache ++ commands
     })
 
-  def exists(eBikeId: EBikeId): Boolean =
-    existingEBikes(eBikeId)
+  def exists(eBikeId: EBikeId, atTimestamp: Long): Boolean =
+    cache
+      .takeWhile(_.timestamp.get <= atTimestamp)
+      .map(_.entityId)
+      .toSet(eBikeId)
 
-  def eBikes(): Set[EBikeId] = existingEBikes
+  def eBikes(atTimestamp: Long): Set[EBikeId] =
+    cache
+      .takeWhile(_.timestamp.get <= atTimestamp)
+      .map(_.entityId)
+      .toSet

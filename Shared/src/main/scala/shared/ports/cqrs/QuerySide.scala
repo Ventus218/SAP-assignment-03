@@ -13,11 +13,12 @@ object QuerySide:
     Error,
     Env
   ]]:
-    def find(id: TId): Option[T]
-    def getAll(): Iterable[T]
+    def find(id: TId, atTimestamp: Long = Long.MaxValue): Option[T]
+    def getAll(atTimestamp: Long = Long.MaxValue): Iterable[T]
 
-    def commands(): Iterable[C]
+    def commands(atTimestamp: Long = Long.MaxValue): Iterable[C]
 
     def commandResult(
-        id: CommandId
+        id: CommandId,
+        atTimestamp: Long = Long.MaxValue
     ): Either[CommandNotFound, Either[Error, Option[T]]]

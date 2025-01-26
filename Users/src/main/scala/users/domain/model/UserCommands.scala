@@ -11,7 +11,11 @@ enum UserCommandErrors:
 
 object UserCommands:
   import UserCommandErrors.*
-  case class Registered(id: CommandId, entityId: Username) extends UserCommands:
+  case class Registered(
+      id: CommandId,
+      entityId: Username,
+      timestamp: Option[Long] = None
+  ) extends UserCommands:
     def apply(
         previous: Option[User],
         env: Option[Nothing] = None
@@ -20,7 +24,11 @@ object UserCommands:
         case None       => Right(Some(User(entityId)))
         case Some(user) => Left(UsernameAlreadyInUse(entityId))
 
-  case class Delete(id: CommandId, entityId: Username) extends UserCommands:
+  case class Delete(
+      id: CommandId,
+      entityId: Username,
+      timestamp: Option[Long] = None
+  ) extends UserCommands:
     def apply(
         previous: Option[User],
         env: Option[Nothing] = None

@@ -14,6 +14,10 @@ object EventSourcing:
     val id: CommandId
     val entityId: TId
 
+    /** The timestamp at which the command was actually stored
+      */
+    val timestamp: Option[Long]
+
     /** Applies the command to an optional previous version of an entity.
       *
       * If you plan on using this method directly you should check that the

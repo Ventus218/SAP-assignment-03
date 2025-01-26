@@ -14,14 +14,15 @@ class UsersServiceKafkaAdapter(bootstrapServers: String, topic: String)
   given ReadWriter[CommandId] = ReadWriter.derived
   given ReadWriter[Username] = ReadWriter.derived
   // This message definition is trimmed to the bare minimum
-  private case class Registered(id: CommandId, entityId: Username)
-      derives ReadWriter
+  private case class Registered(
+      id: CommandId,
+      entityId: Username,
+      timestamp: Option[Long]
+  ) derives ReadWriter
 
-  private var _existingUsers = Set[Username]()
-  private def existingUsers = synchronized(_existingUsers)
-  private def existingUsers_=(v: Set[Username]) = synchronized {
-    _existingUsers = v
-  }
+  private var _cache = Seq[Registered]()
+  private def cache = synchronized(_cache)
+  private def cache_=(v: Seq[Registered]) = synchronized { _cache = v }
 
   Thread.ofVirtual
     .name("users-service-consumer")
@@ -29,17 +30,19 @@ class UsersServiceKafkaAdapter(bootstrapServers: String, topic: String)
       Consumer.autocloseable(bootstrapServers): consumer =>
         consumer.subscribe(List(topic).asJava)
         while true do
-          val newUsers = Iterator
+          val commands = Iterator
             .continually(
               consumer.poll(java.time.Duration.ofMillis(20)).asScala
             )
             .takeWhile(_.nonEmpty)
             .flatten
             .map(r => read[Registered](r.value()))
-            .map(_.entityId)
             .toSeq
-          if !newUsers.isEmpty then existingUsers = existingUsers ++ newUsers
+          if !commands.isEmpty then cache = cache ++ commands
     })
 
-  override def exists(username: Username): Boolean =
-    existingUsers(username)
+  override def exists(username: Username, atTimestamp: Long): Boolean =
+    cache
+      .takeWhile(_.timestamp.get <= atTimestamp)
+      .map(_.entityId)
+      .toSet(username)
