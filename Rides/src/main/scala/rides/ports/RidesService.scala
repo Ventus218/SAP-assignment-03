@@ -5,8 +5,6 @@ import rides.domain.errors.*
 
 trait RidesService:
 
-  def transaction[T](f: => T): T
-
   def find(id: RideId): Option[Ride]
 
   def activeRides(): Iterable[Ride]
