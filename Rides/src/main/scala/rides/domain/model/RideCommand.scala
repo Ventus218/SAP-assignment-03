@@ -53,8 +53,10 @@ object RideCommand:
         env: RideCommandEnviroment
     ): Either[StartRideCommandError, Map[RideId, Ride]] =
       assert(timestamp != None)
-      lazy val bikeIsFree = !entities.values.exists(_.eBikeId == eBikeId)
-      lazy val userIsFree = !entities.values.exists(_.username == username)
+      lazy val bikeIsFree =
+        !entities.values.exists(r => r.eBikeId == eBikeId && r.end == None)
+      lazy val userIsFree =
+        !entities.values.exists(r => r.username == username && r.end == None)
       for
         _ <- Either.cond(bikeIsFree, (), EBikeAlreadyInUse(eBikeId))
         _ <- Either.cond(userIsFree, (), UserAlreadyRiding(username))
