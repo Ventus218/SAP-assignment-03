@@ -1,16 +1,13 @@
 package rides.domain;
 
-import java.util.*
 import scala.concurrent.*
 import shared.domain.EventSourcing.CommandId
 import rides.domain.model.*
-import rides.ports.persistence.RidesRepository
 import rides.ports.*
 import rides.ports.cqrs.*
 import shared.ports.cqrs.QuerySide.Errors.CommandNotFound
 
 class RidesServiceImpl(
-    private val ridesRepository: RidesRepository,
     private val eBikesService: EBikesService,
     private val usersService: UsersService,
     private val commandSide: RidesCommandSide,
@@ -29,7 +26,7 @@ class RidesServiceImpl(
       eBikeId: EBikeId,
       username: Username
   )(using ExecutionContext): Future[CommandId] =
-    val rideId = RideId(UUID.randomUUID().toString())
+    val rideId = RideId(java.util.UUID.randomUUID().toString())
     val command =
       RideCommand.StartRide(CommandId.random(), rideId, eBikeId, username)
     commandSide.publish(command).map(_ => command.id)
