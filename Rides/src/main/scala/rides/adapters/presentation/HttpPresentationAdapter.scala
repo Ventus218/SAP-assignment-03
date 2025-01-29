@@ -96,6 +96,11 @@ object HttpPresentationAdapter:
                               Conflict,
                               s"User ${id.value} already riding"
                             )
+                          case RideAlreadyEnded(id) =>
+                            complete(
+                              Conflict,
+                              s"Ride ${id.value} already ended"
+                            )
             )
           ,
           path("healthCheck"):

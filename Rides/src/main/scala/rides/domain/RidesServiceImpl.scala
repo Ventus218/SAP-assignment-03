@@ -32,13 +32,8 @@ class RidesServiceImpl(
     commandSide.publish(command).map(_ => command.id)
 
   def endRide(id: RideId)(using ExecutionContext): Future[CommandId] =
-    ???
-    // ridesRepository.update(
-    //   id,
-    //   r => r.copy(end = r.end.orElse(Some(Date())))
-    // ) match
-    //   case Left(value) => Left(RideNotFound(id))
-    //   case Right(ride) => Right(ride)
+    val command = RideCommand.EndRide(CommandId.random(), id)
+    commandSide.publish(command).map(_ => command.id)
 
   def availableEBikes(): Iterable[EBikeId] =
     eBikesService.eBikes() -- activeRides().map(_.eBikeId)

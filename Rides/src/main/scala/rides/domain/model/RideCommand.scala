@@ -21,6 +21,7 @@ sealed trait RideCommandError
 object RideCommandError:
   sealed trait StartRideCommandError extends RideCommandError
   case class RideNotFound(id: RideId) extends RideCommandError
+  case class RideAlreadyEnded(id: RideId) extends RideCommandError
   case class EBikeNotFound(id: EBikeId)
       extends RideCommandError,
         StartRideCommandError
@@ -63,3 +64,22 @@ object RideCommand:
         _ <- Either.cond(userExist, (), UserNotFound(username))
         ride = Ride(entityId, eBikeId, username, java.util.Date(), None)
       yield (entities + (ride.id -> ride))
+
+  case class EndRide(
+      id: CommandId,
+      entityId: RideId,
+      timestamp: Option[Long] = None
+  ) extends RideCommand:
+
+    def setTimestamp(timestamp: Long): EndRide =
+      copy(timestamp = Some(timestamp))
+
+    def apply(entities: Map[RideId, Ride])(using
+        RideCommandEnviroment
+    ): Either[RideNotFound | RideAlreadyEnded, Map[RideId, Ride]] =
+      entities.get(entityId) match
+        case None => Left(RideNotFound(entityId))
+        case Some(ride) if ride.end.isDefined =>
+          Left(RideAlreadyEnded(entityId))
+        case Some(ride) =>
+          Right(entities + (ride.id -> ride.copy(end = Some(java.util.Date()))))
