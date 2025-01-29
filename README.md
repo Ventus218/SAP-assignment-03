@@ -163,7 +163,9 @@ Basically every entity that wants to be even sourced should implement the Entity
 All the commands that can be applied to an entity must implement the Command interface which requires:
 - an *id* which uniquely identifies the command
 - an *entityId* which uniquely identifies the command
-- and should provide an *apply* method which applies the command to an optional previous version of an entity returning the new version or an error.
+- an optional timestamp which must be set when to the time the command was persisted
+- and should provide an *apply* method which applies the command to an collection of entities and returns an updated collection or an error.
+- subclasses of Command should also provide an Environment which is a datatype that can hold any necessary data to perform the application of a command. (For example when applying a command which should create a ride it should also be able to access data about ebikes and users).
 
 The Command interface is actually an abstract class which provides a static method that applies in sequence all the commands in a collection which do not result in errors.
 It is expected that every command refers to the same entity.

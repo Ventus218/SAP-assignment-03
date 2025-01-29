@@ -6,7 +6,7 @@ title Users microservice domain model
 
 hide empty members
 
-interface UserCommands<Username, User, UserCommandErrors> extends Command
+interface UserCommands<Username, User, UserCommandErrors, Unit> extends Command
 
 enum UserCommandErrors {
     UsernameAlreadyInUse(username: Username)
@@ -15,7 +15,8 @@ enum UserCommandErrors {
 struct Registered extends UserCommands {
     id: CommandId
     entityId: Username
-    apply(previous: Option<User>): Either<UsernameAlreadyInUse, Option<User>>
+    timestamp: Option<Long>
+    apply(entities: Map<Username, User>)(Unit): Either<UsernameAlreadyInUse, Map<Username, User>>
 }
 
 struct User<Username> extends Entity
