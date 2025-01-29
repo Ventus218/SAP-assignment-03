@@ -64,7 +64,13 @@ object RideCommand:
         userExist = env.usersService.exists(username, timestamp.get)
         _ <- Either.cond(bikeExist, (), EBikeNotFound(eBikeId))
         _ <- Either.cond(userExist, (), UserNotFound(username))
-        ride = Ride(entityId, eBikeId, username, java.util.Date(), None)
+        ride = Ride(
+          entityId,
+          eBikeId,
+          username,
+          java.util.Date(timestamp.get),
+          None
+        )
       yield (entities + (ride.id -> ride))
 
   case class EndRide(
