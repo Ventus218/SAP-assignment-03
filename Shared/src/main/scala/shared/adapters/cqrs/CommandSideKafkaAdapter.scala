@@ -8,7 +8,7 @@ import upickle.default.*
 
 abstract class CommandSideKafkaAdapter[TId, T <: Entity[
   TId
-], Error, Env, C <: Command[TId, T, Error, Env]](
+], Error, Env, C <: Command[TId, T, Error, Env, C]](
     bootstrapServers: String,
     clientId: String,
     topic: String

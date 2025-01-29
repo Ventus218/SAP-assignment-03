@@ -3,7 +3,7 @@ package ebikes.domain.model
 import shared.domain.EventSourcing.*
 
 sealed trait EBikeCommands
-    extends Command[EBikeId, EBike, EBikeCommandErrors, Nothing]
+    extends Command[EBikeId, EBike, EBikeCommandErrors, Unit, EBikeCommands]
 
 enum EBikeCommandErrors:
   case EBikeIdAlreadyInUse(id: EBikeId)
@@ -20,8 +20,11 @@ object EBikeCommands:
       timestamp: Option[Long] = None
   ) extends EBikeCommands:
 
+    def setTimestamp(timestamp: Long): Register =
+      copy(timestamp = Some(timestamp))
+
     override def apply(entities: Map[EBikeId, EBike])(using
-        Option[Environment[Nothing]]
+        Unit
     ): Either[EBikeIdAlreadyInUse, Map[EBikeId, EBike]] =
       entities.get(entityId) match
         case None =>
@@ -39,8 +42,11 @@ object EBikeCommands:
       timestamp: Option[Long] = None
   ) extends EBikeCommands:
 
+    def setTimestamp(timestamp: Long): UpdatePhisicalData =
+      copy(timestamp = Some(timestamp))
+
     override def apply(entities: Map[EBikeId, EBike])(using
-        Option[Environment[Nothing]]
+        Unit
     ): Either[EBikeNotFound, Map[EBikeId, EBike]] =
       entities.get(entityId) match
         case None => Left(EBikeNotFound(entityId))

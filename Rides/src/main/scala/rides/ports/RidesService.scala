@@ -1,7 +1,9 @@
 package rides.ports;
 
+import scala.concurrent.*
+import shared.domain.EventSourcing.CommandId
+import shared.ports.cqrs.QuerySide.Errors
 import rides.domain.model.*;
-import rides.domain.errors.*
 
 trait RidesService:
 
@@ -9,16 +11,17 @@ trait RidesService:
 
   def activeRides(): Iterable[Ride]
 
-  type StartRideError = UserOrEBikeAlreadyOnARide | UserOrEBikeDoesNotExist |
-    FailureInOtherService
-
   def startRide(
       eBikeId: EBikeId,
       username: Username
-  ): Either[StartRideError, Ride]
+  )(using ExecutionContext): Future[CommandId]
 
-  def endRide(id: RideId): Either[RideNotFound, Ride]
+  def endRide(id: RideId)(using ExecutionContext): Future[CommandId]
 
   def availableEBikes(): Iterable[EBikeId]
+
+  def commandResult(
+      id: CommandId
+  ): Either[Errors.CommandNotFound, Either[RideCommandError, Option[Ride]]]
 
   def healthCheckError(): Option[String]

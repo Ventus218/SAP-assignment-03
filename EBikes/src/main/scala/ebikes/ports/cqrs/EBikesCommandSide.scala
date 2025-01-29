@@ -8,6 +8,6 @@ trait EBikesCommandSide
       EBikeId,
       EBike,
       EBikeCommandErrors,
-      Nothing,
+      Unit,
       EBikeCommands
     ]

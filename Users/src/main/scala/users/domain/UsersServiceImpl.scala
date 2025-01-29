@@ -12,7 +12,7 @@ class UsersServiceImpl(
     private val usersQuerySide: UsersQuerySide
 ) extends UsersService:
 
-  given Option[Environment[Nothing]] = None
+  given Unit = ()
 
   override def registerUser(username: Username)(using
       ExecutionContext

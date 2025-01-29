@@ -1,26 +1,26 @@
-package users.adapters.cqrs
+package rides.adapters.cqrs
 
 import scala.concurrent.*
 import upickle.default.*
 import shared.adapters.cqrs.CommandSideKafkaAdapter
-import users.domain.model.*
-import users.ports.cqrs.*
+import rides.domain.model.*
+import rides.ports.cqrs.*
 
-import UserCommandsSerialization.given
+import RideCommandsSerialization.given
 
-class UsersCommandSideKafkaAdapter(
+class RidesCommandSideKafkaAdapter(
     bootstrapServers: String,
     clientId: String,
     topic: String
 ) extends CommandSideKafkaAdapter[
-      Username,
-      User,
-      UserCommandErrors,
-      Unit,
-      UserCommands
+      RideId,
+      Ride,
+      RideCommandError,
+      RideCommandEnviroment,
+      RideCommand
     ](
       bootstrapServers,
       clientId,
       topic
     ),
-      UsersCommandSide
+      RidesCommandSide

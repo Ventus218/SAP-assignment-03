@@ -4,4 +4,4 @@ import shared.ports.cqrs.QuerySide.*
 import users.domain.model.*
 
 trait UsersQuerySide
-    extends QuerySide[Username, User, UserCommandErrors, Nothing, UserCommands]
+    extends QuerySide[Username, User, UserCommandErrors, Unit, UserCommands]

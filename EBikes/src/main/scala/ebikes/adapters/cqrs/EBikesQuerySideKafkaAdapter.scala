@@ -15,7 +15,7 @@ class EBikesQuerySideKafkaAdapter(
       EBikeId,
       EBike,
       EBikeCommandErrors,
-      Nothing,
+      Unit,
       EBikeCommands
     ](bootstrapServers, topic),
       EBikesQuerySide

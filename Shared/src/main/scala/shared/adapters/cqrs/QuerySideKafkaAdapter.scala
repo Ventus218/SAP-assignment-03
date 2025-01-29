@@ -14,7 +14,8 @@ class QuerySideKafkaAdapter[TId, T <: Entity[
   TId,
   T,
   Error,
-  Env
+  Env,
+  C
 ]](bootstrapServers: String, topic: String)(using
     ReadWriter[C]
 ) extends QuerySide[TId, T, Error, Env, C]:
@@ -35,20 +36,18 @@ class QuerySideKafkaAdapter[TId, T <: Entity[
             )
             .takeWhile(_.nonEmpty)
             .flatten
-            .map(r => read[C](r.value()))
+            .map(r => read[C](r.value()).setTimestamp(r.timestamp()))
             .toSeq
           if !commands.isEmpty then cache = cache ++ commands
     })
 
-  override def find(id: TId, atTimestamp: Long)(using
-      Option[Environment[Env]]
-  ): Option[T] =
+  override def find(id: TId, atTimestamp: Long)(using Env): Option[T] =
     cache
       .takeWhile(_.timestamp.get <= atTimestamp)
       .applyCommands()
       .get(id)
 
-  override def getAll(atTimestamp: Long)(using Option[Environment[Env]]): Iterable[T] =
+  override def getAll(atTimestamp: Long)(using Env): Iterable[T] =
     cache
       .takeWhile(_.timestamp.get <= atTimestamp)
       .applyCommands()
@@ -59,7 +58,7 @@ class QuerySideKafkaAdapter[TId, T <: Entity[
       .takeWhile(_.timestamp.get <= atTimestamp)
 
   override def commandResult(id: CommandId)(using
-      Option[Environment[Env]]
+      Env
   ): Either[Errors.CommandNotFound, Either[Error, Map[TId, T]]] =
     val commands = cache
     commands.find(_.id == id) match

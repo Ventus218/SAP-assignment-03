@@ -8,6 +8,7 @@ trait CommandSide[TId, T <: Entity[TId], Error, Env, C <: Command[
   TId,
   T,
   Error,
-  Env
+  Env,
+  C
 ]]:
   def publish(command: C)(using ExecutionContext): Future[Unit]

@@ -13,6 +13,7 @@ import rides.adapters.presentation.HttpPresentationAdapter
 import rides.adapters.ebikesservice.EBikesServiceKafkaAdapter
 import rides.adapters.usersservice.UsersServiceKafkaAdapter
 import rides.adapters.persistence.RidesFileSystemRepositoryAdapter
+import rides.adapters.cqrs.*
 
 object Main extends App:
   given actorSystem: ActorSystem[Any] =
@@ -26,7 +27,9 @@ object Main extends App:
   val kafkaTopic = "rides"
   val eBikesService = EBikesServiceKafkaAdapter(kafkaBootstrapServers, "ebikes")
   val usersService = UsersServiceKafkaAdapter(kafkaBootstrapServers, "users")
-  val ridesService = RidesServiceImpl(adapter, eBikesService, usersService)
+  val commandSide = RidesCommandSideKafkaAdapter(kafkaBootstrapServers, "RidesService", kafkaTopic)
+  val querySide = RidesQuerySideKafkaAdapter(kafkaBootstrapServers, kafkaTopic)
+  val ridesService = RidesServiceImpl(adapter, eBikesService, usersService, commandSide, querySide)
   val host = sys.env.get("HOST").getOrElse("0.0.0.0")
   val port = (for
     portString <- sys.env.get("PORT")

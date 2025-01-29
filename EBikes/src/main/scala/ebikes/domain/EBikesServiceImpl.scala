@@ -14,8 +14,7 @@ class EBikesServiceImpl(
     private val querySide: EBikesQuerySide
 ) extends EBikesService:
 
-  given Option[Environment[Nothing]] = None
-
+  given Unit = ()
   override def register(
       id: EBikeId,
       location: V2D,

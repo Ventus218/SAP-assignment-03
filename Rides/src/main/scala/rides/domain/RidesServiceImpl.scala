@@ -2,70 +2,58 @@ package rides.domain;
 
 import java.util.*
 import scala.concurrent.*
+import shared.domain.EventSourcing.CommandId
 import rides.domain.model.*
-import rides.domain.errors.*
-import rides.domain.errors.UserOrEBikeAlreadyOnARide.*
-import rides.domain.errors.UserOrEBikeDoesNotExist.*
 import rides.ports.persistence.RidesRepository
 import rides.ports.*
-import rides.domain.errors.UserOrEBikeAlreadyOnARide.EBikeAlreadyOnARide
+import rides.ports.cqrs.*
+import shared.ports.cqrs.QuerySide.Errors.CommandNotFound
 
 class RidesServiceImpl(
     private val ridesRepository: RidesRepository,
     private val eBikesService: EBikesService,
-    private val usersService: UsersService
-)(using
-    executionContext: ExecutionContext
+    private val usersService: UsersService,
+    private val commandSide: RidesCommandSide,
+    private val querySide: RidesQuerySide
 ) extends RidesService:
+
+  given RideCommandEnviroment =
+    RideCommandEnviroment(eBikesService, usersService)
   def find(id: RideId): Option[Ride] =
-    ridesRepository.find(id)
+    querySide.find(id)
 
   def activeRides(): Iterable[Ride] =
-    ridesRepository.getAll().filter(_.end.isEmpty)
+    querySide.getAll().filter(_.end.isEmpty)
 
   def startRide(
       eBikeId: EBikeId,
       username: Username
-  ): Either[StartRideError, Ride] =
-    val activeRides = this.activeRides()
+  )(using ExecutionContext): Future[CommandId] =
+    val rideId = RideId(UUID.randomUUID().toString())
+    val command =
+      RideCommand.StartRide(CommandId.random(), rideId, eBikeId, username)
+    commandSide.publish(command).map(_ => command.id)
 
-    lazy val bikeIsFree = !activeRides.exists(_.eBikeId == eBikeId)
-    lazy val userIsFree = !activeRides.exists(_.username == username)
-    val checkEBikeAndUserFree = for
-      _ <- Either.cond(bikeIsFree, (), EBikeAlreadyOnARide(eBikeId))
-      _ <- Either.cond(userIsFree, (), UserAlreadyOnARide(username))
-    yield ()
-
-    checkEBikeAndUserFree match
-      case Left(error) => Left(error)
-      case Right(_) =>
-        val bikeExist = eBikesService.exists(eBikeId)
-        val userExist = usersService.exists(username)
-        val eBikeAndUserExist =
-          for
-            _ <- Either.cond(bikeExist, (), EBikeDoesNotExist(eBikeId))
-            _ <- Either.cond(userExist, (), UserDoesNotExist(username))
-          yield ()
-
-        eBikeAndUserExist match
-          case Left(error) => Left(error)
-          case Right(_) =>
-            val id = RideId(UUID.randomUUID().toString())
-            val ride = Ride(id, eBikeId, username, Date(), None)
-            ridesRepository.insert(id, ride) match
-              case Left(value)  => throw Exception("UUID collision... WTF")
-              case Right(value) => Right(ride)
-
-  def endRide(id: RideId): Either[RideNotFound, Ride] =
-    ridesRepository.update(
-      id,
-      r => r.copy(end = r.end.orElse(Some(Date())))
-    ) match
-      case Left(value) => Left(RideNotFound(id))
-      case Right(ride) => Right(ride)
+  def endRide(id: RideId)(using ExecutionContext): Future[CommandId] =
+    ???
+    // ridesRepository.update(
+    //   id,
+    //   r => r.copy(end = r.end.orElse(Some(Date())))
+    // ) match
+    //   case Left(value) => Left(RideNotFound(id))
+    //   case Right(ride) => Right(ride)
 
   def availableEBikes(): Iterable[EBikeId] =
     eBikesService.eBikes() -- activeRides().map(_.eBikeId)
+
+  def commandResult(
+      id: CommandId
+  ): Either[CommandNotFound, Either[RideCommandError, Option[Ride]]] =
+    querySide.commandResult(id) match
+      case Left(value) => Left(CommandNotFound(value.id))
+      case Right(value) =>
+        val command = querySide.commands().find(_.id == id).get
+        Right(value.map(_.get(command.entityId)))
 
   def healthCheckError(): Option[String] =
     None

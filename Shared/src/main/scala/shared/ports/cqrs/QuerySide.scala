@@ -11,18 +11,15 @@ object QuerySide:
     TId,
     T,
     Error,
-    Env
+    Env,
+    C
   ]]:
-    def find(id: TId, atTimestamp: Long = Long.MaxValue)(using
-        Option[Environment[Env]]
-    ): Option[T]
+    def find(id: TId, atTimestamp: Long = Long.MaxValue)(using Env): Option[T]
 
-    def getAll(atTimestamp: Long = Long.MaxValue)(using
-        Option[Environment[Env]]
-    ): Iterable[T]
+    def getAll(atTimestamp: Long = Long.MaxValue)(using Env): Iterable[T]
 
     def commands(atTimestamp: Long = Long.MaxValue): Iterable[C]
 
     def commandResult(id: CommandId)(using
-        Option[Environment[Env]]
+        Env
     ): Either[CommandNotFound, Either[Error, Map[TId, T]]]

@@ -3,7 +3,7 @@ package users.domain.model
 import shared.domain.EventSourcing.*
 
 sealed trait UserCommands
-    extends Command[Username, User, UserCommandErrors, Nothing]
+    extends Command[Username, User, UserCommandErrors, Unit, UserCommands]
 
 enum UserCommandErrors:
   case UsernameAlreadyInUse(username: Username)
@@ -16,8 +16,11 @@ object UserCommands:
       entityId: Username,
       timestamp: Option[Long] = None
   ) extends UserCommands:
+
+    def setTimestamp(timestamp: Long): Registered =
+      copy(timestamp = Some(timestamp))
     def apply(entities: Map[Username, User])(using
-        Option[Environment[Nothing]]
+        Unit
     ): Either[UsernameAlreadyInUse, Map[Username, User]] =
       entities.get(entityId) match
         case None       => Right(entities.updated(entityId, User(entityId)))
@@ -28,8 +31,11 @@ object UserCommands:
       entityId: Username,
       timestamp: Option[Long] = None
   ) extends UserCommands:
+
+    def setTimestamp(timestamp: Long): Delete =
+      copy(timestamp = Some(timestamp))
     def apply(entities: Map[Username, User])(using
-        Option[Environment[Nothing]]
+        Unit
     ): Either[NotFound, Map[Username, User]] =
       entities.get(entityId) match
         case None        => Left(NotFound(entityId))

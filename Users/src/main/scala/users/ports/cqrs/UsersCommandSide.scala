@@ -8,6 +8,6 @@ trait UsersCommandSide
       Username,
       User,
       UserCommandErrors,
-      Nothing,
+      Unit,
       UserCommands
     ]

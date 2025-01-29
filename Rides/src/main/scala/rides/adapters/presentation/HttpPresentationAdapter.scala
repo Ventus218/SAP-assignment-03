@@ -1,8 +1,8 @@
 package rides.adapters.presentation
 
 import java.util.Date;
-import scala.concurrent.Future
-import akka.actor.typed.ActorSystem
+import scala.concurrent.*
+import akka.actor.typed.*
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.Http.ServerBinding
 import akka.http.scaladsl.model.StatusCodes.*
@@ -13,13 +13,11 @@ import spray.json.*
 import spray.json.JsonWriter.func2Writer
 import spray.json.JsonReader.func2Reader
 import spray.json.DefaultJsonProtocol.*
-import shared.adapters.presentation.HealthCheckError
+import shared.adapters.presentation.*
 import rides.domain.model.*
 import rides.ports.RidesService
 import rides.adapters.presentation.dto.*
-import rides.domain.errors.*
-import rides.domain.errors.UserOrEBikeAlreadyOnARide.*
-import rides.domain.errors.UserOrEBikeDoesNotExist.*
+import rides.domain.model.RideCommandError.*
 
 object HttpPresentationAdapter:
 
@@ -33,63 +31,78 @@ object HttpPresentationAdapter:
   given RootJsonFormat[Ride] = jsonFormat5(Ride.apply)
   given RootJsonFormat[StartRideDTO] = jsonFormat2(StartRideDTO.apply)
   given RootJsonFormat[HealthCheckError] = jsonFormat1(HealthCheckError.apply)
+  import shared.domain.EventSourcing.CommandId
+  given RootJsonFormat[CommandId] = jsonFormat1(CommandId.apply)
 
   def startHttpServer(
       ridesService: RidesService,
       host: String,
       port: Int
-  )(using ActorSystem[Any]): Future[ServerBinding] =
+  )(using system: ActorSystem[Any]): Future[ServerBinding] =
+    // For IO bounded computations in the service
+    given ExecutionContext =
+      system.dispatchers.lookup(DispatcherSelector.blocking())
+
     val route =
-      concat(
-        pathPrefix("rides"):
-          concat(
-            (path("active") & get):
-              complete(ridesService.activeRides().toArray)
-            ,
-            (path("availableEBikes") & get):
-              complete(ridesService.availableEBikes().toArray)
-            ,
-            (post & pathEnd):
-              entity(as[StartRideDTO]) { dto =>
-                ridesService.startRide(dto.eBikeId, dto.username) match
-                  case Left(UserAlreadyOnARide(username)) =>
-                    complete(
-                      Conflict,
-                      s"User ${username.value} already riding"
-                    )
-                  case Left(EBikeAlreadyOnARide(eBikeId)) =>
-                    complete(
-                      Conflict,
-                      s"EBike ${eBikeId.value} already riding"
-                    )
-                  case Left(UserDoesNotExist(user)) =>
-                    complete(NotFound, s"User ${user.value} does not exists")
-                  case Left(EBikeDoesNotExist(id)) =>
-                    complete(NotFound, s"EBike ${id.value} does not exists")
-                  case Left(FailureInOtherService(msg)) =>
-                    complete(InternalServerError, msg)
-                  case Right(value) => complete(value)
-              }
-            ,
-            path(Segment): rideId =>
-              concat(
-                get:
-                  ridesService.find(RideId(rideId)) match
-                    case None        => complete(NotFound, "Ride not found")
-                    case Some(value) => complete(value)
-                ,
-                (put & pathEnd):
-                  ridesService.endRide(RideId(rideId)) match
-                    case Left(value)  => complete(NotFound, "Ride not found")
-                    case Right(value) => complete(value)
-              )
-          )
-        ,
-        path("healthCheck"):
-          ridesService.healthCheckError() match
-            case None => complete(OK, HttpEntity.Empty)
-            case Some(value) =>
-              complete(ServiceUnavailable, HealthCheckError(value))
-      )
+      handleExceptions(ExceptionHandlers.log):
+        concat(
+          pathPrefix("rides"):
+            concat(
+              (path("active") & get):
+                complete(ridesService.activeRides().toArray)
+              ,
+              (path("availableEBikes") & get):
+                complete(ridesService.availableEBikes().toArray)
+              ,
+              (post & pathEnd):
+                entity(as[StartRideDTO]): dto =>
+                  onSuccess(ridesService.startRide(dto.eBikeId, dto.username)):
+                    complete(_)
+              ,
+              path(Segment): segment =>
+                val rideId = RideId(segment)
+                concat(
+                  get:
+                    ridesService.find(rideId) match
+                      case None        => complete(NotFound, "Ride not found")
+                      case Some(value) => complete(value)
+                  ,
+                  (put & pathEnd):
+                    onSuccess(ridesService.endRide(rideId)):
+                      complete(_)
+                )
+              ,
+              (get & path("commands" / Segment)): segment =>
+                ridesService.commandResult(CommandId(segment)) match
+                  case Left(value) => complete(NotFound)
+                  case Right(value) =>
+                    value match
+                      case Right(value) => complete(value)
+                      case Left(value) =>
+                        value match
+                          case RideNotFound(id) =>
+                            complete(NotFound, s"Ride ${id.value} not found")
+                          case EBikeNotFound(id) =>
+                            complete(NotFound, s"EBike ${id.value} not found")
+                          case UserNotFound(id) =>
+                            complete(NotFound, s"User ${id.value} not found")
+                          case EBikeAlreadyInUse(id) =>
+                            complete(
+                              Conflict,
+                              s"EBike ${id.value} already used"
+                            )
+                          case UserAlreadyRiding(id) =>
+                            complete(
+                              Conflict,
+                              s"User ${id.value} already riding"
+                            )
+            )
+          ,
+          path("healthCheck"):
+            ridesService.healthCheckError() match
+              case None => complete(OK, HttpEntity.Empty)
+              case Some(value) =>
+                complete(ServiceUnavailable, HealthCheckError(value))
+        )
 
     Http().newServerAt(host, port).bind(route)
