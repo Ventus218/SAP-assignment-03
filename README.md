@@ -190,6 +190,20 @@ UserCommands and UserCommandErrors were defined which represents respectively al
 
 The UsersService uses a UsersCommandSide and a QueryCommandSide which will then be implemented by their Kafka adapters.
 
+### Warning
+It's exetremely dangerous for other services to reason about commands published in these event sourcing topics, the reason is that the commands published are not known to be successfully appliable.
+
+For example:
+Client A publishes a StartRide command to the rides event sourcing topic.
+Microservice B listen to the rides topic and upon reading that StartRide command it does something reactively
+
+The problem is that it is possible that the command was invalid (for example referring to a non existing user), that can't be known to A unless it knows exacly how to apply all commands (which should not).
+
+The correct solution would be for the rides microservice to publish an event RideStarted right after receiving a valid StartRide command, and for client A to listen for RideStarted events.
+
+In this project the easiest but more dangerous path was taken, listening directly to event sourcing topics, due to lack of time and given the fact that a single developer have knowledge about how the whole system works.
+If this was a production project the aforementioned solution should have been applied.
+
 ## Possible replication
 For simplicity both the command and the query sides will be running inside the same process but if split they could be replicated independently.
 
