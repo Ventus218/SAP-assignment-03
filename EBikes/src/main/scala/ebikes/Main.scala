@@ -43,5 +43,5 @@ object Main extends App:
     .map(_ => println(s"EBikes is listening on $host:$port"))
     .map(_ =>
       val ridesServiceAddress = sys.env.get("RIDES_SERVICE_ADDRESS").get
-      Thread(ABikesEmulator(ridesServiceAddress)).start()
+      Thread.ofVirtual.start(ABikesEmulator(ridesServiceAddress))
     )
