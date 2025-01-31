@@ -41,3 +41,7 @@ object Main extends App:
   HttpPresentationAdapter
     .startHttpServer(eBikesService, host, port)
     .map(_ => println(s"EBikes is listening on $host:$port"))
+    .map(_ =>
+      val ridesServiceAddress = sys.env.get("RIDES_SERVICE_ADDRESS").get
+      Thread(ABikesEmulator(ridesServiceAddress)).start()
+    )
