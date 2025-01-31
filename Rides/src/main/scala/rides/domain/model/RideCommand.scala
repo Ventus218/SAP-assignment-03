@@ -1,5 +1,6 @@
 package rides.domain.model
 
+import java.util.Date
 import shared.domain.EventSourcing.*
 import rides.ports.*
 
@@ -37,6 +38,7 @@ object RideCommandError:
 
 object RideCommand:
   import RideCommandError.*
+  import RideStatus.*
 
   case class StartRide(
       id: CommandId,
@@ -54,9 +56,13 @@ object RideCommand:
     ): Either[StartRideCommandError, Map[RideId, Ride]] =
       assert(timestamp != None)
       lazy val bikeIsFree =
-        !entities.values.exists(r => r.eBikeId == eBikeId && r.end == None)
+        !entities.values.exists(r =>
+          r.eBikeId == eBikeId && !r.status.isInstanceOf[Ended]
+        )
       lazy val userIsFree =
-        !entities.values.exists(r => r.username == username && r.end == None)
+        !entities.values.exists(r =>
+          r.username == username && !r.status.isInstanceOf[Ended]
+        )
       for
         _ <- Either.cond(bikeIsFree, (), EBikeAlreadyInUse(eBikeId))
         _ <- Either.cond(userIsFree, (), UserAlreadyRiding(username))
@@ -68,8 +74,8 @@ object RideCommand:
           entityId,
           eBikeId,
           username,
-          java.util.Date(timestamp.get),
-          None
+          Date(timestamp.get),
+          BikeGoingToUser
         )
       yield (entities + (ride.id -> ride))
 
@@ -87,7 +93,7 @@ object RideCommand:
     ): Either[RideNotFound | RideAlreadyEnded, Map[RideId, Ride]] =
       entities.get(entityId) match
         case None => Left(RideNotFound(entityId))
-        case Some(ride) if ride.end.isDefined =>
+        case Some(ride) if ride.status.isInstanceOf[Ended] =>
           Left(RideAlreadyEnded(entityId))
         case Some(ride) =>
-          Right(entities + (ride.id -> ride.copy(end = Some(java.util.Date()))))
+          Right(entities + (ride.id -> ride.copy(status = Ended(Date()))))

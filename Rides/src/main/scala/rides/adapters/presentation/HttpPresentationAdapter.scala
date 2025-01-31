@@ -1,6 +1,5 @@
 package rides.adapters.presentation
 
-import java.util.Date;
 import scala.concurrent.*
 import akka.actor.typed.*
 import akka.http.scaladsl.Http
@@ -8,31 +7,15 @@ import akka.http.scaladsl.Http.ServerBinding
 import akka.http.scaladsl.model.StatusCodes.*
 import akka.http.scaladsl.model.HttpEntity
 import akka.http.scaladsl.server.Directives._
-import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
-import spray.json.*
-import spray.json.JsonWriter.func2Writer
-import spray.json.JsonReader.func2Reader
-import spray.json.DefaultJsonProtocol.*
 import shared.adapters.presentation.*
+import shared.domain.EventSourcing.CommandId
 import rides.domain.model.*
 import rides.ports.RidesService
 import rides.adapters.presentation.dto.*
 import rides.domain.model.RideCommandError.*
 
 object HttpPresentationAdapter:
-
-  given JsonFormat[Date] = jsonFormat(
-    func2Reader(js => Date(js.asInstanceOf[JsNumber].value.toLong)),
-    func2Writer[Date](date => JsNumber(date.getTime()))
-  )
-  given RootJsonFormat[Username] = jsonFormat1(Username.apply)
-  given RootJsonFormat[EBikeId] = jsonFormat1(EBikeId.apply)
-  given RootJsonFormat[RideId] = jsonFormat1(RideId.apply)
-  given RootJsonFormat[Ride] = jsonFormat5(Ride.apply)
-  given RootJsonFormat[StartRideDTO] = jsonFormat2(StartRideDTO.apply)
-  given RootJsonFormat[HealthCheckError] = jsonFormat1(HealthCheckError.apply)
-  import shared.domain.EventSourcing.CommandId
-  given RootJsonFormat[CommandId] = jsonFormat1(CommandId.apply)
+  import Serialization.{*, given}
 
   def startHttpServer(
       ridesService: RidesService,
@@ -111,3 +94,35 @@ object HttpPresentationAdapter:
         )
 
     Http().newServerAt(host, port).bind(route)
+
+private object Serialization:
+  import scala.util.Try
+  import java.util.Date;
+  import spray.json.*
+  import spray.json.JsonWriter.func2Writer
+  import spray.json.JsonReader.func2Reader
+  export spray.json.DefaultJsonProtocol.*
+  export akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
+
+  given JsonFormat[Date] = jsonFormat(
+    func2Reader(js => Date(js.asInstanceOf[JsNumber].value.toLong)),
+    func2Writer[Date](date => JsNumber(date.getTime()))
+  )
+  import upickle.default.*
+  given ReadWriter[Date] =
+    readwriter[Long].bimap(
+      date => date.getTime(),
+      long => Date(long)
+    )
+  given ReadWriter[RideStatus] = ReadWriter.derived
+  given JsonFormat[RideStatus] = jsonFormat[RideStatus](
+    func2Reader(js => read[RideStatus](js.compactPrint)),
+    func2Writer(s => write(s).parseJson)
+  )
+  given RootJsonFormat[Username] = jsonFormat1(Username.apply)
+  given RootJsonFormat[EBikeId] = jsonFormat1(EBikeId.apply)
+  given RootJsonFormat[RideId] = jsonFormat1(RideId.apply)
+  given RootJsonFormat[Ride] = jsonFormat5(Ride.apply)
+  given RootJsonFormat[StartRideDTO] = jsonFormat2(StartRideDTO.apply)
+  given RootJsonFormat[HealthCheckError] = jsonFormat1(HealthCheckError.apply)
+  given RootJsonFormat[CommandId] = jsonFormat1(CommandId.apply)

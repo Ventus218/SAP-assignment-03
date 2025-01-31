@@ -20,7 +20,7 @@ class RidesServiceImpl(
     querySide.find(id)
 
   def activeRides(): Iterable[Ride] =
-    querySide.getAll().filter(_.end.isEmpty)
+    querySide.getAll().filter(!_.status.isInstanceOf[RideStatus.Ended])
 
   def startRide(
       eBikeId: EBikeId,

@@ -8,5 +8,5 @@ case class Ride(
     eBikeId: EBikeId,
     username: Username,
     start: Date,
-    end: Option[Date]
+    status: RideStatus
 ) extends Entity[RideId]
