@@ -1,7 +1,6 @@
 package ebikes
 
 import sttp.client4.*
-import sttp.model.MediaType
 import upickle.default.*
 import ebikes.domain.model.*
 
@@ -16,7 +15,7 @@ object ABikesEmulator:
     case BikeGoingToUser
     case UserRiding
     case BikeGoingBackToStation
-    case Ended(timestamp: Date)
+    // case Ended(timestamp: Date) // This cannot be retrieved by fetching on rides/active
 
   given ReadWriter[EBikeId] = ReadWriter.derived
   given ReadWriter[Date] =
@@ -43,10 +42,22 @@ class ABikesEmulator(ridesServiceAddress: String) extends Runnable:
           println(s"Status ${res.code}: ${res.body}") // log error
           activeRides // fall back to current
 
-      // TODO: for each ride (and bike respectively) implement behavior
+      activeRides.values.foreach: ride =>
+        ride.status match
+          case RideStatus.BikeGoingToUser =>
+          // TODO: autonomously ride to user
+          // TODO: inform rides service when user is reached
+          case RideStatus.UserRiding =>
+          // TODO: simulate random riding
+          case RideStatus.BikeGoingBackToStation =>
+          // TODO: autonomously ride to station
+          // TODO: inform rides service when station is reached
+
+      Thread.sleep(1000)
 
 private object Utils:
   import scala.concurrent.*
+  import sttp.model.MediaType
 
   extension [T](r: Request[T])
     def jsonBody(body: String): Request[T] =
