@@ -15,7 +15,6 @@ object ABikesEmulator:
     case BikeGoingToUser
     case UserRiding
     case BikeGoingBackToStation
-    // case Ended(timestamp: Date) // This cannot be retrieved by fetching on rides/active
 
   given ReadWriter[EBikeId] = ReadWriter.derived
   given ReadWriter[Date] =
@@ -28,32 +27,46 @@ class ABikesEmulator(ridesServiceAddress: String) extends Runnable:
   import Utils.*
   import ABikesEmulator.*
 
-  private var activeRides: Map[RideId, Ride] = Map()
+  private var _activeRides: Map[RideId, Ride] = Map()
+  private def activeRides: Map[RideId, Ride] = synchronized(_activeRides)
+  private def setActiveRides(f: Map[RideId, Ride] => Map[RideId, Ride]) =
+    synchronized(this._activeRides = f(this._activeRides))
 
   def run(): Unit =
     while true do
-      activeRides = quickRequest
+      quickRequest
         .get(uri"http://$ridesServiceAddress/rides/active")
         .send(DefaultSyncBackend()) match
         case res if res.code.isSuccess =>
-          val rides = read[List[Ride]](res.body)
-          rides.groupMapReduce(_.id)(identity)((r1, r2) => r1)
+          val rides = read[Set[Ride]](res.body)
+          val newRides = rides.map(_.id) -- activeRides.keySet
+          setActiveRides(_ ++ rides.map(r => (r.id -> r)))
+          newRides.foreach(id =>
+            Thread.ofVirtual().start(() => rideEmulator(id))
+          )
         case res =>
           println(s"Status ${res.code}: ${res.body}") // log error
-          activeRides // fall back to current
-
-      activeRides.values.foreach: ride =>
-        ride.status match
-          case RideStatus.BikeGoingToUser =>
-          // TODO: autonomously ride to user
-          // TODO: inform rides service when user is reached
-          case RideStatus.UserRiding =>
-          // TODO: simulate random riding
-          case RideStatus.BikeGoingBackToStation =>
-          // TODO: autonomously ride to station
-          // TODO: inform rides service when station is reached
 
       Thread.sleep(1000)
+
+  private def rideEmulator(id: RideId): Unit =
+    var oldStatus = Option.empty[RideStatus]
+    while true do
+      val ride = activeRides(id)
+      ride.status match
+        case RideStatus.BikeGoingToUser =>
+          // TODO: autonomously ride to user
+          Thread.sleep(5000)
+        // TODO: inform rides service when user is reached
+        case RideStatus.UserRiding =>
+          Thread.sleep(5000)
+        // TODO: simulate random riding
+        case RideStatus.BikeGoingBackToStation =>
+          // TODO: autonomously ride to station
+          // TODO: inform rides service when station is reached
+          // removes itself from activeRides
+          setActiveRides(_ - id)
+      oldStatus = Some(ride.status)
 
 private object Utils:
   import scala.concurrent.*
