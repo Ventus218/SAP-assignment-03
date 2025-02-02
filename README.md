@@ -145,6 +145,30 @@ Every microservice will expose an HTTP REST API for client consumption while int
 
 ![Components diagram](./doc/diagrams/components.png)
 
+### Autonomous bikes behavior
+An [ABikeEmulator](./EBikes/src/main/scala/ebikes/ABikesEmulator.scala) emulates the autonomous behavior of the bikes.
+
+It works this way:
+1. Polls the rides service to get active rides.
+1. For each active ride, based on it's status it emulates the bike behavior
+    - status `BikeGoingToUser`:
+      1. The bike asks the smart city service what's the best path to reach the user
+      1. The bike follows the path while asking to the smart city service about eventual semaphores statuses
+      1. When the bike reaches the user it informs the rides service that the user was reached
+    - status `UserRiding`:
+      1. The bike randomly jumps from one node to another (emulating a user ride)
+    - status `BikeGoingBackToStation`:
+      1. The bike asks the smart city service what's the best path to reach the charging station
+      1. The bike follows the path while asking to the smart city service about eventual semaphores statuses
+      1. When the bike reaches the station it informs the rides service that the station was reached
+
+For the sake of time and simplicity the following assumptions are made:
+- There's only one charging station
+- There's only one place from where users require a bike
+- Semaphores block traffic in any direction
+The first two of these assumptions allow to hard code paths instead of implementing a shortest path algorithm.
+
+## CQRS and event sourcing
 In general every microservice will have the following architecture:
 
 ![Generic microservice components diagram](./doc/diagrams/generic-microservice-components.png)
@@ -153,7 +177,6 @@ In general every microservice will have the following architecture:
 - A query side will consume published commands to use them for event-sourcing and if applicable materialise the state to achieve more efficient queries.
 - Any data needed from other microservices will be consumed off the event store and materialised as described in the query side.
 
-## Event sourcing and CQRS
 ![CQRS and ES](./doc/diagrams/cqrs-es-domain-model.png)
 This is a generic implementation of the CQRS and ES patterns.
 
