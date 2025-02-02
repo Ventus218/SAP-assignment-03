@@ -42,16 +42,24 @@ object HttpPresentationAdapter:
                   onSuccess(ridesService.startRide(dto.eBikeId, dto.username)):
                     complete(_)
               ,
-              path(Segment): segment =>
+              pathPrefix(Segment): segment =>
                 val rideId = RideId(segment)
                 concat(
-                  get:
+                  (get & pathEnd):
                     ridesService.find(rideId) match
                       case None        => complete(NotFound, "Ride not found")
                       case Some(value) => complete(value)
                   ,
-                  (put & pathEnd):
-                    onSuccess(ridesService.endRide(rideId)):
+                  (put & path("eBikeArrivedToUser")):
+                    onSuccess(ridesService.eBikeArrivedToUser(rideId)):
+                      complete(_)
+                  ,
+                  (put & path("userStoppedRiding")):
+                    onSuccess(ridesService.userStoppedRiding(rideId)):
+                      complete(_)
+                  ,
+                  (put & path("eBikeReachedStation")):
+                    onSuccess(ridesService.eBikeReachedStation(rideId)):
                       complete(_)
                 )
               ,
@@ -79,11 +87,8 @@ object HttpPresentationAdapter:
                               Conflict,
                               s"User ${id.value} already riding"
                             )
-                          case RideAlreadyEnded(id) =>
-                            complete(
-                              Conflict,
-                              s"Ride ${id.value} already ended"
-                            )
+                          case BadCommand(reason) =>
+                            complete(Conflict, reason)
             )
           ,
           path("healthCheck"):

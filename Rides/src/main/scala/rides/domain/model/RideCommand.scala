@@ -22,7 +22,6 @@ sealed trait RideCommandError
 object RideCommandError:
   sealed trait StartRideCommandError extends RideCommandError
   case class RideNotFound(id: RideId) extends RideCommandError
-  case class RideAlreadyEnded(id: RideId) extends RideCommandError
   case class EBikeNotFound(id: EBikeId)
       extends RideCommandError,
         StartRideCommandError
@@ -35,6 +34,7 @@ object RideCommandError:
   case class UserAlreadyRiding(id: Username)
       extends RideCommandError,
         StartRideCommandError
+  case class BadCommand(reason: String) extends RideCommandError
 
 object RideCommand:
   import RideCommandError.*
@@ -79,21 +79,75 @@ object RideCommand:
         )
       yield (entities + (ride.id -> ride))
 
-  case class EndRide(
+  case class EBikeArrivedToUser(
       id: CommandId,
       entityId: RideId,
       timestamp: Option[Long] = None
   ) extends RideCommand:
 
-    def setTimestamp(timestamp: Long): EndRide =
+    override def setTimestamp(timestamp: Long): EBikeArrivedToUser =
+      copy(timestamp = Some(timestamp))
+
+    override def apply(entities: Map[RideId, Ride])(using
+        RideCommandEnviroment
+    ): Either[RideNotFound | BadCommand, Map[RideId, Ride]] =
+      entities.get(entityId) match
+        case None => Left(RideNotFound(entityId))
+        case Some(r) if r.status == BikeGoingToUser =>
+          Right(entities + (entityId -> r.copy(status = UserRiding)))
+        case Some(r) =>
+          Left(
+            BadCommand(
+              s"EBikeArrivedToUser not appliable in status ${r.status}"
+            )
+          )
+
+  case class UserStoppedRiding(
+      id: CommandId,
+      entityId: RideId,
+      timestamp: Option[Long] = None
+  ) extends RideCommand:
+
+    override def setTimestamp(timestamp: Long): UserStoppedRiding =
+      copy(timestamp = Some(timestamp))
+
+    override def apply(entities: Map[RideId, Ride])(using
+        RideCommandEnviroment
+    ): Either[RideNotFound | BadCommand, Map[RideId, Ride]] =
+      entities.get(entityId) match
+        case None => Left(RideNotFound(entityId))
+        case Some(r) if r.status == UserRiding =>
+          Right(
+            entities + (entityId -> r.copy(status = BikeGoingBackToStation))
+          )
+        case Some(r) =>
+          Left(
+            BadCommand(s"UserStoppedRiding not appliable in status ${r.status}")
+          )
+
+  case class EBikeReachedStation(
+      id: CommandId,
+      entityId: RideId,
+      timestamp: Option[Long] = None
+  ) extends RideCommand:
+
+    def setTimestamp(timestamp: Long): EBikeReachedStation =
       copy(timestamp = Some(timestamp))
 
     def apply(entities: Map[RideId, Ride])(using
         RideCommandEnviroment
-    ): Either[RideNotFound | RideAlreadyEnded, Map[RideId, Ride]] =
+    ): Either[RideNotFound | BadCommand, Map[RideId, Ride]] =
       entities.get(entityId) match
         case None => Left(RideNotFound(entityId))
-        case Some(ride) if ride.status.isInstanceOf[Ended] =>
-          Left(RideAlreadyEnded(entityId))
+        case Some(ride) if ride.status == BikeGoingBackToStation =>
+          Right(
+            entities + (ride.id -> ride.copy(status =
+              Ended(Date(timestamp.get))
+            ))
+          )
         case Some(ride) =>
-          Right(entities + (ride.id -> ride.copy(status = Ended(Date()))))
+          Left(
+            BadCommand(
+              s"BikeReachedStation not appliable in status ${ride.status}"
+            )
+          )

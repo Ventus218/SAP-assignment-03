@@ -66,6 +66,7 @@ class ABikesSimulator(ridesServiceAddress: String) extends Runnable:
           // TODO: inform rides service when station is reached
           // removes itself from activeRides
           setActiveRides(_ - id)
+          return
       oldStatus = Some(ride.status)
 
 private object Utils:

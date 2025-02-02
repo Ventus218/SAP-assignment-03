@@ -16,7 +16,11 @@ trait RidesService:
       username: Username
   )(using ExecutionContext): Future[CommandId]
 
-  def endRide(id: RideId)(using ExecutionContext): Future[CommandId]
+  def eBikeArrivedToUser(id: RideId)(using ExecutionContext): Future[CommandId]
+
+  def userStoppedRiding(id: RideId)(using ExecutionContext): Future[CommandId]
+
+  def eBikeReachedStation(id: RideId)(using ExecutionContext): Future[CommandId]
 
   def availableEBikes(): Iterable[EBikeId]
 

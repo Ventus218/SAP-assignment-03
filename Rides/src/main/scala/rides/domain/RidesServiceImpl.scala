@@ -31,8 +31,20 @@ class RidesServiceImpl(
       RideCommand.StartRide(CommandId.random(), rideId, eBikeId, username)
     commandSide.publish(command).map(_ => command.id)
 
-  def endRide(id: RideId)(using ExecutionContext): Future[CommandId] =
-    val command = RideCommand.EndRide(CommandId.random(), id)
+  def eBikeArrivedToUser(id: RideId)(using
+      ExecutionContext
+  ): Future[CommandId] =
+    val command = RideCommand.EBikeArrivedToUser(CommandId.random(), id)
+    commandSide.publish(command).map(_ => command.id)
+
+  def userStoppedRiding(id: RideId)(using ExecutionContext): Future[CommandId] =
+    val command = RideCommand.UserStoppedRiding(CommandId.random(), id)
+    commandSide.publish(command).map(_ => command.id)
+
+  def eBikeReachedStation(id: RideId)(using
+      ExecutionContext
+  ): Future[CommandId] =
+    val command = RideCommand.EBikeReachedStation(CommandId.random(), id)
     commandSide.publish(command).map(_ => command.id)
 
   def availableEBikes(): Iterable[EBikeId] =
