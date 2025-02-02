@@ -146,17 +146,17 @@ Every microservice will expose an HTTP REST API for client consumption while int
 ![Components diagram](./doc/diagrams/components.png)
 
 ### Autonomous bikes behavior
-An [ABikeEmulator](./EBikes/src/main/scala/ebikes/ABikesEmulator.scala) emulates the autonomous behavior of the bikes.
+An [ABikeSimulator](./EBikes/src/main/scala/ebikes/ABikesSimulator.scala) simulates the autonomous behavior of the bikes.
 
 It works this way:
 1. Polls the rides service to get active rides.
-1. For each active ride, based on it's status it emulates the bike behavior
+1. For each active ride, based on it's status it simulates the bike behavior
     - status `BikeGoingToUser`:
       1. The bike asks the smart city service what's the best path to reach the user
       1. The bike follows the path while asking to the smart city service about eventual semaphores statuses
       1. When the bike reaches the user it informs the rides service that the user was reached
     - status `UserRiding`:
-      1. The bike randomly jumps from one node to another (emulating a user ride)
+      1. The bike randomly jumps from one node to another (simulating a user ride)
     - status `BikeGoingBackToStation`:
       1. The bike asks the smart city service what's the best path to reach the charging station
       1. The bike follows the path while asking to the smart city service about eventual semaphores statuses

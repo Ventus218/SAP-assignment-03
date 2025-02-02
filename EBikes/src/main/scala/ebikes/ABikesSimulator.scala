@@ -4,7 +4,7 @@ import sttp.client4.*
 import upickle.default.*
 import ebikes.domain.model.*
 
-object ABikesEmulator:
+object ABikesSimulator:
   private case class RideId(value: String) derives ReadWriter
 
   private case class Ride(id: RideId, eBikeId: EBikeId, status: RideStatus)
@@ -23,9 +23,9 @@ object ABikesEmulator:
       long => Date(long)
     )
 
-class ABikesEmulator(ridesServiceAddress: String) extends Runnable:
+class ABikesSimulator(ridesServiceAddress: String) extends Runnable:
   import Utils.*
-  import ABikesEmulator.*
+  import ABikesSimulator.*
 
   private var _activeRides: Map[RideId, Ride] = Map()
   private def activeRides: Map[RideId, Ride] = synchronized(_activeRides)
@@ -42,14 +42,14 @@ class ABikesEmulator(ridesServiceAddress: String) extends Runnable:
           val newRides = rides.map(_.id) -- activeRides.keySet
           setActiveRides(_ ++ rides.map(r => (r.id -> r)))
           newRides.foreach(id =>
-            Thread.ofVirtual().start(() => rideEmulator(id))
+            Thread.ofVirtual().start(() => rideSimulator(id))
           )
         case res =>
           println(s"Status ${res.code}: ${res.body}") // log error
 
       Thread.sleep(1000)
 
-  private def rideEmulator(id: RideId): Unit =
+  private def rideSimulator(id: RideId): Unit =
     var oldStatus = Option.empty[RideStatus]
     while true do
       val ride = activeRides(id)
