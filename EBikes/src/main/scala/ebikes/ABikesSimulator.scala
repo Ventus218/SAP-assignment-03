@@ -32,10 +32,12 @@ class ABikesSimulator(ridesServiceAddress: String) extends Runnable:
   private def setActiveRides(f: Map[RideId, Ride] => Map[RideId, Ride]) =
     synchronized(this._activeRides = f(this._activeRides))
 
+  private val ridesUri = s"http://$ridesServiceAddress/rides"
+
   def run(): Unit =
     while true do
       quickRequest
-        .get(uri"http://$ridesServiceAddress/rides/active")
+        .get(uri"$ridesUri/active")
         .send(DefaultSyncBackend()) match
         case res if res.code.isSuccess =>
           val rides = read[Set[Ride]](res.body)
@@ -50,24 +52,31 @@ class ABikesSimulator(ridesServiceAddress: String) extends Runnable:
       Thread.sleep(1000)
 
   private def rideSimulator(id: RideId): Unit =
-    var oldStatus = Option.empty[RideStatus]
+    var waitForStateChange = false
     while true do
       val ride = activeRides(id)
       ride.status match
         case RideStatus.BikeGoingToUser =>
-          // TODO: autonomously ride to user
-          Thread.sleep(5000)
-        // TODO: inform rides service when user is reached
+          if waitForStateChange then ()
+          else
+            // TODO: autonomously ride to user
+            Thread.sleep(5000)
+            quickRequest
+              .put(uri"$ridesUri/${id.value}/eBikeArrivedToUser")
+              .send(DefaultSyncBackend())
+            waitForStateChange = true
         case RideStatus.UserRiding =>
+          // TODO: simulate random riding
           Thread.sleep(5000)
-        // TODO: simulate random riding
         case RideStatus.BikeGoingBackToStation =>
           // TODO: autonomously ride to station
-          // TODO: inform rides service when station is reached
-          // removes itself from activeRides
+          Thread.sleep(5000)
+          quickRequest
+            .put(uri"$ridesUri/${id.value}/eBikeReachedStation")
+            .send(DefaultSyncBackend())
           setActiveRides(_ - id)
-          return
-      oldStatus = Some(ride.status)
+          return // exits function (terminating the thread)
+      Thread.sleep(100)
 
 private object Utils:
   import scala.concurrent.*
