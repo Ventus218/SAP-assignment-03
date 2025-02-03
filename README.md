@@ -163,9 +163,7 @@ It works this way:
 
 For the sake of time and simplicity the following assumptions are made:
 - There's only one charging station
-- There's only one place from where users require a bike
 - Semaphores block traffic in any direction
-The first two of these assumptions allow to hard code paths instead of implementing a shortest path algorithm.
 
 ## Architecture design
 
