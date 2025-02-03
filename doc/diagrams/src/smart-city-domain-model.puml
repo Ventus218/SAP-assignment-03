@@ -28,6 +28,8 @@ interface SmartCityService <<Service>> {
     junctions(): Iterable<Junction>
     bestPath(from: JunctionId, to: JunctionId): Seq<Street> | JunctionNotFound
     semaphore(SemaphoreId): Semaphore | SemaphoreNotFound
+    ..
+    healthCheckError(): Option<String>
 }
 
 class JunctionsRepository <<Repository>>
