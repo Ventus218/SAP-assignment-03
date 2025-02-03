@@ -1,0 +1,43 @@
+@startuml smart-city-domain-model
+
+hide empty members
+
+struct Junction <<Aggregate root>> {
+    id: JunctionId
+    hasChargingStation: Boolean
+}
+
+struct Street {
+    id: StreetId
+    timeLengthMillis: ULong
+}
+
+struct Semaphore {
+    id: SemaphoreId
+    timeGreenMillis: ULong
+    timeRedMillis: ULong
+    nextChangeStateTimestamp: Long
+}
+
+enum SemaphoreState {
+    Red
+    Green
+}
+
+interface SmartCityService <<Service>> {
+    junctions(): Iterable<Junction>
+    bestPath(from: JunctionId, to: JunctionId): Seq<Street> | JunctionNotFound
+    semaphore(SemaphoreId): Semaphore | SemaphoreNotFound
+}
+
+class JunctionsRepository <<Repository>>
+
+Junction "1" -r- "0..1" Semaphore : "              "
+Street "0..*" -u- "1" Junction : "start >"
+Street -u[hidden]- Junction
+Street "0..*" -u- "1" Junction : "end >"
+Semaphore "1" -- "1" SemaphoreState : "state"
+SmartCityService --> JunctionsRepository : "uses"
+JunctionsRepository o- Junction
+
+@enduml

@@ -89,6 +89,16 @@ lazy val eBikes = project
   )
   .dependsOn(shared)
 
+lazy val smartCity = project
+  .in(file("SmartCity"))
+  .settings(
+    name := "SmartCity",
+    version := "0.1.0",
+    akkaHttpSettings,
+    assembly / assemblyOutputPath := file("./SmartCity/executable.jar")
+  )
+  .dependsOn(shared)
+
 import scala.sys.process.*
 
 val allProjectsFilter = ScopeFilter(projects = inAnyProject)

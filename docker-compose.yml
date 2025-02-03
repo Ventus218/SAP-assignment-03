@@ -2,6 +2,7 @@ x-common_environment: &common_environment
   EBIKES_SERVICE_ADDRESS: ebikes:8080
   USERS_SERVICE_ADDRESS: users:8080
   RIDES_SERVICE_ADDRESS: rides:8080
+  SMARTCITY_SERVICE_ADDRESS: smart-city:8080
   KAFKA_SERVICE_ADDRESS: kafka:9092
 
 x-common_healthcheck: &common_healthcheck
@@ -52,6 +53,16 @@ services:
     depends_on:
       kafka:
         condition: service_healthy
+    <<: *common_healthcheck
+
+  smart-city:
+    build:
+      args:
+        - executable=SmartCity/executable.jar
+    networks:
+      - private_network
+    environment:
+      <<: *common_environment
     <<: *common_healthcheck
 
   kafka:

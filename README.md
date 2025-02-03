@@ -141,8 +141,8 @@ Given the requirements multiple bounded contexts were identified:
 
 In this section are explained only non trivial domain design choices.
 
-
-
+### Smart city microservice
+![Smart city domain model diagram](./doc/diagrams/smart-city-domain-model.png)
 
 ### Autonomous bikes behavior
 An [ABikeSimulator](./EBikes/src/main/scala/ebikes/ABikesSimulator.scala) simulates the autonomous behavior of the bikes.

@@ -22,3 +22,10 @@ services:
     ports:
       - 8083:8080
     <<: *restart_policy
+
+  smart-city:
+    volumes:
+      - ${HOME}/Desktop/EBikeApp/db:/data/db:rw
+    ports:
+      - 8084:8080
+    <<: *restart_policy
