@@ -5,6 +5,5 @@ final case class Junction(
     id: JunctionId,
     hasChargingStation: Boolean,
     semaphore: Option[Semaphore],
-    enteringStreets: Set[Street],
-    exitingStreets: Set[Street]
+    streets: Set[Street]
 )
