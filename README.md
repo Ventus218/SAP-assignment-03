@@ -144,6 +144,11 @@ In this section are explained only non trivial domain design choices.
 ### Smart city microservice
 ![Smart city domain model diagram](./doc/diagrams/smart-city-domain-model.png)
 
+For the sake of time and simplicity the following assumptions are made:
+- There's only one charging station
+- Semaphores block traffic in any direction
+- The streets graph is fixed
+
 ### Autonomous bikes behavior
 An [ABikeSimulator](./EBikes/src/main/scala/ebikes/ABikesSimulator.scala) simulates the autonomous behavior of the bikes.
 
@@ -160,10 +165,6 @@ It works this way:
       1. The bike asks the smart city service what's the best path to reach the charging station
       1. The bike follows the path while asking to the smart city service about eventual semaphores statuses
       1. When the bike reaches the station it informs the rides service that the station was reached
-
-For the sake of time and simplicity the following assumptions are made:
-- There's only one charging station
-- Semaphores block traffic in any direction
 
 ## Architecture design
 

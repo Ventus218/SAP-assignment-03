@@ -32,14 +32,12 @@ interface SmartCityService <<Service>> {
     healthCheckError(): Option<String>
 }
 
-class JunctionsRepository <<Repository>>
 
-Junction "1" -r- "0..1" Semaphore : "              "
-Street "0..*" -u- "1" Junction : "start >"
+Junction "1" -r-> "0..1" Semaphore : "              "
+Street "0..*" <-u- "1" Junction : "starts in >"
 Street -u[hidden]- Junction
-Street "0..*" -u- "1" Junction : "end >"
-Semaphore "1" -- "1" SemaphoreState : "state"
-SmartCityService --> JunctionsRepository : "uses"
-JunctionsRepository o- Junction
+Street "0..*" <-u- "1" Junction : "ends in >"
+Semaphore "1" --> "1" SemaphoreState : "state"
+SmartCityService "1" o- "0..*" Junction : "              "
 
 @enduml
