@@ -137,13 +137,12 @@ Given the requirements multiple bounded contexts were identified:
 |Register new ebike|An action taken by the admin which has the outcome of making the system aware of a new bike which can then be rented|Create new ebike|
 |Monitor ebikes/rides|Admin's capability to check the location of each bike and which users are riding them||
 
-## Design
+## Domain design
 
-The system is designed follwing an event-driven microservices architecture where each bounded contexts is mapped to a single microservice or frontend.
+In this section are explained only non trivial domain design choices.
 
-Every microservice will expose an HTTP REST API for client consumption while internally to the system communication will rely on an event broker.
 
-![Components diagram](./doc/diagrams/components.png)
+
 
 ### Autonomous bikes behavior
 An [ABikeSimulator](./EBikes/src/main/scala/ebikes/ABikesSimulator.scala) simulates the autonomous behavior of the bikes.
@@ -168,7 +167,15 @@ For the sake of time and simplicity the following assumptions are made:
 - Semaphores block traffic in any direction
 The first two of these assumptions allow to hard code paths instead of implementing a shortest path algorithm.
 
-## CQRS and event sourcing
+## Architecture design
+
+The system is designed follwing an event-driven microservices architecture where each bounded contexts is mapped to a single microservice or frontend.
+
+Every microservice will expose an HTTP REST API for client consumption while internally to the system communication will rely on an event broker.
+
+![Components diagram](./doc/diagrams/components.png)
+
+### CQRS and event sourcing
 In general every microservice will have the following architecture:
 
 ![Generic microservice components diagram](./doc/diagrams/generic-microservice-components.png)
@@ -180,7 +187,7 @@ In general every microservice will have the following architecture:
 ![CQRS and ES](./doc/diagrams/cqrs-es-domain-model.png)
 This is a generic implementation of the CQRS and ES patterns.
 
-### Event sourcing
+#### Event sourcing
 Basically every entity that wants to be even sourced should implement the Entity interface that just requires to expose an entity identifier.
 
 All the commands that can be applied to an entity must implement the Command interface which requires:
@@ -193,7 +200,7 @@ All the commands that can be applied to an entity must implement the Command int
 The Command interface is actually an abstract class which provides a static method that applies in sequence all the commands in a collection which do not result in errors.
 It is expected that every command refers to the same entity.
 
-### CQRS
+#### CQRS
 Two interface are provided:
 - *CommandSide* which allows to publish a command
 - *QuerySide* which allows to find a specific entity and getting all the entities.
@@ -206,14 +213,14 @@ Two generic implementations are also provided to work with a Kafka backend:
 
   A non-persistent database can be used because the actual store for every message is the event store, in fact upon starting the service the query side will get up to date fetching from Kafka every single command from the beginning.
 
-### Example of usage (Users microservice)
+#### Example of usage (Users microservice)
 ![Users microservice domain model](./doc/diagrams/users-microservice-domain-model.png)
 
 UserCommands and UserCommandErrors were defined which represents respectively all the possible commands/events that a user can recevie and all the possible errors that could result from applying those commands.
 
 The UsersService uses a UsersCommandSide and a QueryCommandSide which will then be implemented by their Kafka adapters.
 
-### Warning
+#### Warning
 It's exetremely dangerous for other services to reason about commands published in these event sourcing topics, the reason is that the commands published are not known to be successfully appliable.
 
 For example:
@@ -227,7 +234,7 @@ The correct solution would be for the rides microservice to publish an event Rid
 In this project the easiest but more dangerous path was taken, listening directly to event sourcing topics, due to lack of time and given the fact that a single developer have knowledge about how the whole system works.
 If this was a production project the aforementioned solution should have been applied.
 
-## Possible replication
+### Possible replication
 For simplicity both the command and the query sides will be running inside the same process but if split they could be replicated independently.
 
 The command side is stateless since it doesn't need to have any knowledge about the current state of the system (as explained [here](#handling-http-requests))
@@ -238,7 +245,7 @@ The query side is stateless while considering only event-sourcing and stateful i
 >
 > Keeping reads consistent would require that requests from a client are always directed to the same query side instance
 
-## Handling HTTP Requests
+### Handling HTTP Requests
 
 "Read" requests are trivial to handle, they just ask the query model and give the answer as a response.
 
