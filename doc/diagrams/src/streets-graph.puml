@@ -14,4 +14,9 @@ note left of (J1)
     Charging station
 end note
 
+note as N
+    Every junction J<N> (except J1)
+    has a semaphore SEM<N>
+end note
+
 @enduml

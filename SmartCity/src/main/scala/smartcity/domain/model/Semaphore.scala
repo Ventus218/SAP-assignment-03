@@ -12,3 +12,8 @@ final case class Semaphore(
 enum SemaphoreState:
   case Red
   case Green
+
+  def other: SemaphoreState =
+    this match
+      case Red   => Green
+      case Green => Red
