@@ -4,26 +4,10 @@ import sttp.client4.*
 import upickle.default.*
 import ebikes.domain.model.*
 
-object ABikesSimulator:
-  private case class RideId(value: String) derives ReadWriter
-
-  private case class Ride(id: RideId, eBikeId: EBikeId, status: RideStatus)
-      derives ReadWriter
-
-  import java.util.Date
-  enum RideStatus derives ReadWriter:
-    case BikeGoingToUser
-    case UserRiding
-    case BikeGoingBackToStation
-
-  given ReadWriter[EBikeId] = ReadWriter.derived
-  given ReadWriter[Date] =
-    readwriter[Long].bimap(
-      date => date.getTime(),
-      long => Date(long)
-    )
-
-class ABikesSimulator(ridesServiceAddress: String) extends Runnable:
+class ABikesSimulator(
+    ridesServiceAddress: String,
+    smartCityServiceAddress: String
+) extends Runnable:
   import Utils.*
   import ABikesSimulator.*
 
@@ -32,9 +16,24 @@ class ABikesSimulator(ridesServiceAddress: String) extends Runnable:
   private def setActiveRides(f: Map[RideId, Ride] => Map[RideId, Ride]) =
     synchronized(this._activeRides = f(this._activeRides))
 
+  private var junctions: Map[JunctionId, Junction] = Map()
+  private def chargingStation: Junction =
+    junctions.values.find(_.hasChargingStation).get
+
   private val ridesUri = s"http://$ridesServiceAddress/rides"
+  private val smartCityUri = s"http://$smartCityServiceAddress/smartcity"
 
   def run(): Unit =
+    // getting streets graph
+    quickRequest
+      .get(uri"$smartCityUri/junctions")
+      .send(DefaultSyncBackend()) match
+      case res if res.code.isSuccess =>
+        junctions = read[Seq[Junction]](res.body).map(j => (j.id -> j)).toMap
+      case res =>
+        println(
+          s"Unable to get streets graph, status ${res.code}: ${res.body}"
+        ) // log error
     while true do
       quickRequest
         .get(uri"$ridesUri/active")
@@ -53,14 +52,49 @@ class ABikesSimulator(ridesServiceAddress: String) extends Runnable:
 
   private def rideSimulator(id: RideId): Unit =
     var waitForStateChange = false
+    var currentJunction = chargingStation
     while true do
       val ride = activeRides(id)
+      val bikeId = ride.eBikeId.value
       ride.status match
-        case RideStatus.BikeGoingToUser =>
+        case RideStatus.BikeGoingToUser(junctionId) =>
           if waitForStateChange then ()
           else
-            // TODO: autonomously ride to user
-            Thread.sleep(5000)
+            val from = junctionId.value
+            val to = chargingStation.id.value
+            quickRequest
+              .get(uri"$smartCityUri/path?from=$from&to=$to")
+              .send(DefaultSyncBackend()) match
+              case res if res.isSuccess =>
+                val path = read[Seq[Street]](res.body)
+                path.foreach: street =>
+                  currentJunction.semaphore match
+                    case None => ()
+                    case Some(Semaphore(SemaphoreId(id), _, _, _, _)) =>
+                      quickRequest
+                        .get(uri"$smartCityUri/semaphores/$id")
+                        .send(DefaultSyncBackend()) match
+                        case res if res.isSuccess =>
+                          val sem = read[Semaphore](res.body)
+                          print(s"$bikeId: Semaphore $id is ${sem.state}")
+                          val waitTime =
+                            if (sem.state == SemaphoreState.Red)
+                              print(
+                                s", wait for ${sem.nextChangeStateTimestamp}ms"
+                              )
+                              Thread.sleep(sem.nextChangeStateTimestamp)
+                            println("")
+                        case res =>
+                          println(
+                            s"Failed best path request, status ${res.code}: ${res.body}"
+                          ) // log error
+                  println(s"$bikeId: Going through street ${street.id.value}")
+                  Thread.sleep(street.timeLengthMillis)
+              case res =>
+                println(
+                  s"Failed best path request, status ${res.code}: ${res.body}"
+                ) // log error
+            println(s"$bikeId: Arrived to user!")
             quickRequest
               .put(uri"$ridesUri/${id.value}/eBikeArrivedToUser")
               .send(DefaultSyncBackend())
@@ -97,3 +131,48 @@ private object Utils:
         .recover({ case t: Throwable =>
           Left(t.getMessage())
         })
+
+object ABikesSimulator:
+  private case class RideId(value: String) derives ReadWriter
+
+  private case class Ride(
+      id: RideId,
+      eBikeId: EBikeId,
+      status: RideStatus
+  ) derives ReadWriter
+
+  enum RideStatus derives ReadWriter:
+    case BikeGoingToUser(junctionId: JunctionId)
+    case UserRiding
+    case BikeGoingBackToStation
+
+  given ReadWriter[EBikeId] = ReadWriter.derived
+  import java.util.Date
+  given ReadWriter[Date] =
+    readwriter[Long].bimap(
+      date => date.getTime(),
+      long => Date(long)
+    )
+
+  case class SemaphoreId(value: String) derives ReadWriter
+  enum SemaphoreState derives ReadWriter:
+    case Red
+    case Green
+  case class Semaphore(
+      id: SemaphoreId,
+      state: SemaphoreState,
+      timeGreenMillis: Long,
+      timeRedMillis: Long,
+      nextChangeStateTimestamp: Long
+  ) derives ReadWriter
+
+  case class StreetId(value: String) derives ReadWriter
+  case class Street(id: StreetId, timeLengthMillis: Long) derives ReadWriter
+
+  case class JunctionId(value: String) derives ReadWriter
+  case class Junction(
+      id: JunctionId,
+      hasChargingStation: Boolean,
+      semaphore: Option[Semaphore] = None,
+      streets: Set[Street]
+  ) derives ReadWriter
