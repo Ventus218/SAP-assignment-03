@@ -1,5 +1,6 @@
 package ebikes
 
+import scala.util.Random
 import sttp.client4.*
 import upickle.default.*
 import ebikes.domain.model.*
@@ -53,6 +54,40 @@ class ABikesSimulator(
   private def rideSimulator(id: RideId): Unit =
     var waitForStateChange = false
     var currentJunction = chargingStation
+
+    def ridePath(logPrefix: String, from: JunctionId, to: JunctionId): Unit =
+      quickRequest
+        .get(uri"$smartCityUri/path?from=${from.value}&to=${to.value}")
+        .send(DefaultSyncBackend()) match
+        case res if res.isSuccess =>
+          val path = read[Seq[Street]](res.body)
+          path.foreach: street =>
+            currentJunction.semaphore match
+              case None => ()
+              case Some(Semaphore(SemaphoreId(id), _, _, _, _)) =>
+                quickRequest
+                  .get(uri"$smartCityUri/semaphores/$id")
+                  .send(DefaultSyncBackend()) match
+                  case res if res.isSuccess =>
+                    val sem = read[Semaphore](res.body)
+                    print(s"$logPrefix: Semaphore $id is ${sem.state}")
+                    val waitTime =
+                      if (sem.state == SemaphoreState.Red)
+                        print(
+                          s", wait for ${sem.nextChangeStateTimestamp}ms"
+                        )
+                        Thread.sleep(sem.nextChangeStateTimestamp)
+                      println("")
+                  case res =>
+                    println(
+                      s"Failed best path request, status ${res.code}: ${res.body}"
+                    ) // log error
+            println(s"$logPrefix: Going through street ${street.id.value}")
+            Thread.sleep(street.timeLengthMillis)
+        case res =>
+          println(
+            s"Failed best path request, status ${res.code}: ${res.body}"
+          ) // log error
     while true do
       val ride = activeRides(id)
       val bikeId = ride.eBikeId.value
@@ -60,51 +95,26 @@ class ABikesSimulator(
         case RideStatus.BikeGoingToUser(junctionId) =>
           if waitForStateChange then ()
           else
-            val from = junctionId.value
-            val to = chargingStation.id.value
-            quickRequest
-              .get(uri"$smartCityUri/path?from=$from&to=$to")
-              .send(DefaultSyncBackend()) match
-              case res if res.isSuccess =>
-                val path = read[Seq[Street]](res.body)
-                path.foreach: street =>
-                  currentJunction.semaphore match
-                    case None => ()
-                    case Some(Semaphore(SemaphoreId(id), _, _, _, _)) =>
-                      quickRequest
-                        .get(uri"$smartCityUri/semaphores/$id")
-                        .send(DefaultSyncBackend()) match
-                        case res if res.isSuccess =>
-                          val sem = read[Semaphore](res.body)
-                          print(s"$bikeId: Semaphore $id is ${sem.state}")
-                          val waitTime =
-                            if (sem.state == SemaphoreState.Red)
-                              print(
-                                s", wait for ${sem.nextChangeStateTimestamp}ms"
-                              )
-                              Thread.sleep(sem.nextChangeStateTimestamp)
-                            println("")
-                        case res =>
-                          println(
-                            s"Failed best path request, status ${res.code}: ${res.body}"
-                          ) // log error
-                  println(s"$bikeId: Going through street ${street.id.value}")
-                  Thread.sleep(street.timeLengthMillis)
-              case res =>
-                println(
-                  s"Failed best path request, status ${res.code}: ${res.body}"
-                ) // log error
+            ridePath(bikeId, chargingStation.id, junctionId)
             println(s"$bikeId: Arrived to user!")
             quickRequest
               .put(uri"$ridesUri/${id.value}/eBikeArrivedToUser")
               .send(DefaultSyncBackend())
             waitForStateChange = true
         case RideStatus.UserRiding =>
-          // TODO: simulate random riding
-          Thread.sleep(5000)
+          // simulate random riding
+          // TODO: maybe can reuse ridePath
+          val streetChoice = Random.shuffle(currentJunction.streets.toSeq).head
+          val streetId = streetChoice.id.value
+          val streetLength = streetChoice.timeLengthMillis
+          println(s"$bikeId: Taking street $streetId for ${streetLength}ms")
+          Thread.sleep(streetLength)
+          currentJunction = (junctions.values.toSet - currentJunction)
+            .find(_.streets(streetChoice))
+            .get
+          println(s"$bikeId: Arrived at junction ${currentJunction.id.value}")
         case RideStatus.BikeGoingBackToStation =>
-          // TODO: autonomously ride to station
-          Thread.sleep(5000)
+          ridePath(bikeId, currentJunction.id, chargingStation.id)
           quickRequest
             .put(uri"$ridesUri/${id.value}/eBikeReachedStation")
             .send(DefaultSyncBackend())
