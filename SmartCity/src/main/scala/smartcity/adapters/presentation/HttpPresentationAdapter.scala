@@ -45,7 +45,7 @@ object HttpPresentationAdapter:
             (get & path("junctions")):
               complete(service.junctions().toArray)
             ,
-            (get & path("semaphore" / Segment)): segment =>
+            (get & path("semaphores" / Segment)): segment =>
               val semaphoreId = SemaphoreId(segment)
               service.semaphore(semaphoreId) match
                 case Left(_) =>
