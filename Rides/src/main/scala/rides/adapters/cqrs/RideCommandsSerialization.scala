@@ -9,4 +9,5 @@ object RideCommandsSerialization:
   given ReadWriter[RideId] = ReadWriter.derived
   given ReadWriter[EBikeId] = ReadWriter.derived
   given ReadWriter[Username] = ReadWriter.derived
+  given ReadWriter[JunctionId] = ReadWriter.derived
   given ReadWriter[RideCommand] = ReadWriter.derived

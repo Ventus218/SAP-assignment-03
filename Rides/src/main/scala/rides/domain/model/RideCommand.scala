@@ -45,6 +45,7 @@ object RideCommand:
       entityId: RideId,
       eBikeId: EBikeId,
       username: Username,
+      junctionId: JunctionId,
       timestamp: Option[Long] = None
   ) extends RideCommand:
 
@@ -75,7 +76,7 @@ object RideCommand:
           eBikeId,
           username,
           Date(timestamp.get),
-          BikeGoingToUser
+          BikeGoingToUser(junctionId)
         )
       yield (entities + (ride.id -> ride))
 
@@ -93,7 +94,7 @@ object RideCommand:
     ): Either[RideNotFound | BadCommand, Map[RideId, Ride]] =
       entities.get(entityId) match
         case None => Left(RideNotFound(entityId))
-        case Some(r) if r.status == BikeGoingToUser =>
+        case Some(r) if r.status.isInstanceOf[BikeGoingToUser] =>
           Right(entities + (entityId -> r.copy(status = UserRiding)))
         case Some(r) =>
           Left(

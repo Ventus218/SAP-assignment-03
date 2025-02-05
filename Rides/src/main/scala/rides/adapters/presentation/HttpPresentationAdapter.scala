@@ -39,7 +39,10 @@ object HttpPresentationAdapter:
               ,
               (post & pathEnd):
                 entity(as[StartRideDTO]): dto =>
-                  onSuccess(ridesService.startRide(dto.eBikeId, dto.username)):
+                  onSuccess(
+                    ridesService
+                      .startRide(dto.eBikeId, dto.username, dto.junctionId)
+                  ):
                     complete(_)
               ,
               pathPrefix(Segment): segment =>
@@ -119,15 +122,17 @@ private object Serialization:
       date => date.getTime(),
       long => Date(long)
     )
+  given ReadWriter[JunctionId] = ReadWriter.derived
   given ReadWriter[RideStatus] = ReadWriter.derived
   given JsonFormat[RideStatus] = jsonFormat[RideStatus](
     func2Reader(js => read[RideStatus](js.compactPrint)),
     func2Writer(s => write(s).parseJson)
   )
+  given RootJsonFormat[JunctionId] = jsonFormat1(JunctionId.apply)
   given RootJsonFormat[Username] = jsonFormat1(Username.apply)
   given RootJsonFormat[EBikeId] = jsonFormat1(EBikeId.apply)
   given RootJsonFormat[RideId] = jsonFormat1(RideId.apply)
   given RootJsonFormat[Ride] = jsonFormat5(Ride.apply)
-  given RootJsonFormat[StartRideDTO] = jsonFormat2(StartRideDTO.apply)
+  given RootJsonFormat[StartRideDTO] = jsonFormat3(StartRideDTO.apply)
   given RootJsonFormat[HealthCheckError] = jsonFormat1(HealthCheckError.apply)
   given RootJsonFormat[CommandId] = jsonFormat1(CommandId.apply)

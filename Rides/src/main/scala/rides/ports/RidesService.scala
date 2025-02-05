@@ -13,7 +13,8 @@ trait RidesService:
 
   def startRide(
       eBikeId: EBikeId,
-      username: Username
+      username: Username,
+      junctionId: JunctionId
   )(using ExecutionContext): Future[CommandId]
 
   def eBikeArrivedToUser(id: RideId)(using ExecutionContext): Future[CommandId]

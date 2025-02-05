@@ -24,11 +24,18 @@ class RidesServiceImpl(
 
   def startRide(
       eBikeId: EBikeId,
-      username: Username
+      username: Username,
+      junctionId: JunctionId
   )(using ExecutionContext): Future[CommandId] =
     val rideId = RideId(java.util.UUID.randomUUID().toString())
     val command =
-      RideCommand.StartRide(CommandId.random(), rideId, eBikeId, username)
+      RideCommand.StartRide(
+        CommandId.random(),
+        rideId,
+        eBikeId,
+        username,
+        junctionId
+      )
     commandSide.publish(command).map(_ => command.id)
 
   def eBikeArrivedToUser(id: RideId)(using
