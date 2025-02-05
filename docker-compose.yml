@@ -27,6 +27,10 @@ services:
     depends_on:
       kafka:
         condition: service_healthy
+      smart-city:
+        condition: service_healthy
+      rides:
+        condition: service_healthy
     <<: *common_healthcheck
 
   users:
