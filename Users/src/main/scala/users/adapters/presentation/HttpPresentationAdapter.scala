@@ -34,7 +34,7 @@ object HttpPresentationAdapter:
 
     val route =
       concat(
-        pathPrefix("users"):
+        (cors() & pathPrefix("users")):
           concat(
             (get & pathEnd):
               complete(usersService.users().toArray)

@@ -51,7 +51,7 @@ object HttpPresentationAdapter:
 
     val route =
       concat(
-        pathPrefix("ebikes"):
+        (cors() & pathPrefix("ebikes")):
           concat(
             (get & pathEnd):
               complete(eBikesService.eBikes().toArray)
@@ -83,7 +83,10 @@ object HttpPresentationAdapter:
             (get & path("commands" / Segment)): segment =>
               eBikesService.commandResult(CommandId(segment)) match
                 case Left(value) =>
-                  complete(NotFound, s"Command $segment not found, try again?")
+                  complete(
+                    NotFound,
+                    s"Command $segment not found, try again?"
+                  )
                 case Right(value) =>
                   value match
                     case Right(value) => complete(value)

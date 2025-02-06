@@ -29,7 +29,7 @@ object HttpPresentationAdapter:
     val route =
       handleExceptions(ExceptionHandlers.log):
         concat(
-          pathPrefix("rides"):
+          (cors() & pathPrefix("rides")):
             concat(
               (path("active") & get):
                 complete(ridesService.activeRides().toArray)
