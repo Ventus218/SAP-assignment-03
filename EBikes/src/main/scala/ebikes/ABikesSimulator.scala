@@ -47,15 +47,7 @@ class ABikesSimulator(
     var waitForStateChange = false
     var currentJunction = chargingStation
 
-    def ridePath(
-        from: JunctionId,
-        to: JunctionId
-    )(using logPrefix: String = ""): Unit =
-      val pathBody = requestOrLogError(
-        uri"$smartCityUri/path?from=${from.value}&to=${to.value}",
-        retryUntilSuccessInterval = 1000
-      ).get
-      val path = read[Seq[Street]](pathBody)
+    def ridePath(path: Seq[Street])(using logPrefix: String = ""): Unit =
       path.foreach: street =>
         currentJunction.semaphore match
           case None => ()
@@ -67,22 +59,40 @@ class ABikesSimulator(
             val sem = read[Semaphore](semaphoreBody)
             print(s"${logPrefix}Semaphore $id is ${sem.state}")
             if (sem.state == SemaphoreState.Red)
-              print(s", wait for ${sem.nextChangeStateTimestamp}ms")
-              Thread.sleep(sem.nextChangeStateTimestamp)
+              val waitTime =
+                sem.nextChangeStateTimestamp - System.currentTimeMillis()
+              print(s", wait for ${waitTime}ms")
+              if waitTime > 0 then Thread.sleep(waitTime)
             println("")
-        println(s"${logPrefix}Going through street ${street.id.value}")
-        Thread.sleep(street.timeLengthMillis)
+        val streetId = street.id.value
+        val streetLength = street.timeLengthMillis
+        println(s"${logPrefix}Riding street $streetId for ${streetLength}ms")
+        Thread.sleep(streetLength)
+        currentJunction = junctions(
+          (junctions.keySet - currentJunction.id)
+            .find(k => junctions(k).streets(street))
+            .get
+        )
+        println(s"${logPrefix}Arrived at junction ${currentJunction.id.value}")
+
+    def getBestPath(from: JunctionId, to: JunctionId): Seq[Street] =
+      val pathBody = requestOrLogError(
+        uri"$smartCityUri/path?from=${from.value}&to=${to.value}",
+        retryUntilSuccessInterval = 1000
+      ).get
+      read[Seq[Street]](pathBody)
 
     while true do
       val ride = activeRides(id)
       val bikeId = ride.eBikeId.value
-      given String = s"bikeId: "
+      given String = s"$bikeId: "
       ride.status match
         case RideStatus.BikeGoingToUser(junctionId) =>
           if waitForStateChange then ()
           else
-            ridePath(chargingStation.id, junctionId)
-            println(s"$bikeId: Arrived to user!")
+            println(s"$bikeId: Ride requested, going to ${ride.username.value}")
+            ridePath(getBestPath(chargingStation.id, junctionId))
+            println(s"$bikeId: Arrived to ${ride.username.value}!")
             requestOrLogError(
               uri"$ridesUri/${id.value}/eBikeArrivedToUser",
               Method.PUT,
@@ -91,24 +101,17 @@ class ABikesSimulator(
             waitForStateChange = true
         case RideStatus.UserRiding =>
           // simulate random riding
-          // TODO: maybe can reuse ridePath
-          val streetChoice = Random.shuffle(currentJunction.streets.toSeq).head
-          val streetId = streetChoice.id.value
-          val streetLength = streetChoice.timeLengthMillis
-          println(s"$bikeId: Taking street $streetId for ${streetLength}ms")
-          Thread.sleep(streetLength)
-          currentJunction = (junctions.values.toSet - currentJunction)
-            .find(_.streets(streetChoice))
-            .get
-          println(s"$bikeId: Arrived at junction ${currentJunction.id.value}")
+          ridePath(Random.shuffle(currentJunction.streets.toSeq).take(1))
         case RideStatus.BikeGoingBackToStation =>
-          ridePath(currentJunction.id, chargingStation.id)
+          println(s"$bikeId: Ride finished, going back to charging station!")
+          ridePath(getBestPath(currentJunction.id, chargingStation.id))
           requestOrLogError(
             uri"$ridesUri/${id.value}/eBikeReachedStation",
             Method.PUT,
             retryUntilSuccessInterval = 500
           )
           setActiveRides(_ - id)
+          println(s"$bikeId: Arrived back to charging station!")
           return // exits function (terminating the thread)
       Thread.sleep(100)
 
@@ -155,10 +158,12 @@ private object Utils:
         })
 
 object ABikesSimulator:
+  private case class Username(value: String) derives ReadWriter
   private case class RideId(value: String) derives ReadWriter
 
   private case class Ride(
       id: RideId,
+      username: Username,
       eBikeId: EBikeId,
       status: RideStatus
   ) derives ReadWriter
