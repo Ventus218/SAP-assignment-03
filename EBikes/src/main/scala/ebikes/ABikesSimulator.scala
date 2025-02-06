@@ -26,21 +26,24 @@ class ABikesSimulator(
   private val smartCityUri = s"http://$smartCityServiceAddress/smartcity"
 
   def getStreetsGraph(): Unit =
-    val body = requestOrLogError(
-      uri"$smartCityUri/junctions",
-      retryUntilSuccessInterval = 1000
-    ).get
+    val body = quickRequest
+      .get(uri"$smartCityUri/junctions")
+      .sendSyncLogError(retryUntilSuccessInterval = 1000)
+      .get
     junctions = read[Seq[Junction]](body).map(j => (j.id -> j)).toMap
 
   def run(): Unit =
     getStreetsGraph()
     while true do
-      requestOrLogError(uri"$ridesUri/active").foreach: ridesBody =>
-        val rides = read[Set[Ride]](ridesBody)
-        val newRides = rides.map(_.id) -- activeRides.keySet
-        setActiveRides(_ ++ rides.map(r => (r.id -> r)))
-        newRides.foreach: id =>
-          Thread.ofVirtual().start(() => rideSimulator(id))
+      quickRequest
+        .get(uri"$ridesUri/active")
+        .sendSyncLogError()
+        .foreach: ridesBody =>
+          val rides = read[Set[Ride]](ridesBody)
+          val newRides = rides.map(_.id) -- activeRides.keySet
+          setActiveRides(_ ++ rides.map(r => (r.id -> r)))
+          newRides.foreach: id =>
+            Thread.ofVirtual().start(() => rideSimulator(id))
       Thread.sleep(1000)
 
   private def rideSimulator(id: RideId): Unit =
@@ -52,10 +55,10 @@ class ABikesSimulator(
         currentJunction.semaphore match
           case None => ()
           case Some(Semaphore(JunctionId(id), _, _, _, _)) =>
-            val semaphoreBody = requestOrLogError(
-              uri"$smartCityUri/semaphores/$id",
-              retryUntilSuccessInterval = 1000
-            ).get
+            val semaphoreBody = quickRequest
+              .get(uri"$smartCityUri/semaphores/$id")
+              .sendSyncLogError(retryUntilSuccessInterval = 1000)
+              .get
             val sem = read[Semaphore](semaphoreBody)
             print(s"${logPrefix}Semaphore on junction $id is ${sem.state}")
             if (sem.state == SemaphoreState.Red)
@@ -76,10 +79,10 @@ class ABikesSimulator(
         println(s"${logPrefix}Arrived at junction ${currentJunction.id.value}")
 
     def getBestPath(from: JunctionId, to: JunctionId): Seq[Street] =
-      val pathBody = requestOrLogError(
-        uri"$smartCityUri/path?from=${from.value}&to=${to.value}",
-        retryUntilSuccessInterval = 1000
-      ).get
+      val pathBody = quickRequest
+        .get(uri"$smartCityUri/path?from=${from.value}&to=${to.value}")
+        .sendSyncLogError(retryUntilSuccessInterval = 1000)
+        .get
       read[Seq[Street]](pathBody)
 
     while true do
@@ -93,11 +96,9 @@ class ABikesSimulator(
             println(s"$bikeId: Ride requested, going to ${ride.username.value}")
             ridePath(getBestPath(chargingStation.id, junctionId))
             println(s"$bikeId: Arrived to ${ride.username.value}!")
-            requestOrLogError(
-              uri"$ridesUri/${id.value}/eBikeArrivedToUser",
-              Method.PUT,
-              retryUntilSuccessInterval = 500
-            )
+            quickRequest
+              .put(uri"$ridesUri/${id.value}/eBikeArrivedToUser")
+              .sendSyncLogError(retryUntilSuccessInterval = 500)
             waitForStateChange = true
         case RideStatus.UserRiding =>
           // simulate random riding
@@ -105,37 +106,13 @@ class ABikesSimulator(
         case RideStatus.BikeGoingBackToStation =>
           println(s"$bikeId: Ride finished, going back to charging station!")
           ridePath(getBestPath(currentJunction.id, chargingStation.id))
-          requestOrLogError(
-            uri"$ridesUri/${id.value}/eBikeReachedStation",
-            Method.PUT,
-            retryUntilSuccessInterval = 500
-          )
+          quickRequest
+            .put(uri"$ridesUri/${id.value}/eBikeReachedStation")
+            .sendSyncLogError(retryUntilSuccessInterval = 500)
           setActiveRides(_ - id)
           println(s"$bikeId: Arrived back to charging station!")
           return // exits function (terminating the thread)
       Thread.sleep(100)
-
-  def requestOrLogError(
-      uri: Uri,
-      method: Method = Method.GET,
-      retryUntilSuccessInterval: Long = 0
-  )(using logPrefix: String = ""): Option[String] =
-    var result = Option.empty[String]
-    while
-      result = quickRequest.method(method, uri).send(DefaultSyncBackend()) match
-        case res if res.isSuccess => Some(res.body)
-        case res =>
-          println(
-            s"${logPrefix}${method.method} request $uri failed with status ${res.code}: ${res.body}"
-          )
-          if (retryUntilSuccessInterval != 0)
-            println(s"${logPrefix}retrying in ${retryUntilSuccessInterval}ms")
-            Thread.sleep(retryUntilSuccessInterval)
-          else ()
-          None
-      result.isEmpty && retryUntilSuccessInterval != 0
-    do ()
-    result
 
 private object Utils:
   import scala.concurrent.*
@@ -156,6 +133,29 @@ private object Utils:
         .recover({ case t: Throwable =>
           Left(t.getMessage())
         })
+
+  extension (r: Request[String])
+    def sendSyncLogError(retryUntilSuccessInterval: Long = 0)(using
+        logPrefix: String = ""
+    ): Option[String] =
+      var result = Option.empty[String]
+      while
+        result = r.send(DefaultSyncBackend()) match
+          case res if res.isSuccess => Some(res.body)
+          case res =>
+            println(
+              s"${logPrefix}${r.method} request ${r.uri} failed with status ${res.code}: ${res.body}"
+            )
+            if (retryUntilSuccessInterval != 0)
+              println(
+                s"${logPrefix}retrying in ${retryUntilSuccessInterval}ms"
+              )
+              Thread.sleep(retryUntilSuccessInterval)
+            else ()
+            None
+        result.isEmpty && retryUntilSuccessInterval != 0
+      do ()
+      result
 
 object ABikesSimulator:
   private case class Username(value: String) derives ReadWriter
