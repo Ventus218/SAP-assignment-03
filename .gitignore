@@ -36,3 +36,6 @@ executable.jar
 
 # production environment variables
 production.env
+
+# GUI streets graph
+GUI/streets-graph.png
