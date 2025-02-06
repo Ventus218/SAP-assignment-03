@@ -51,13 +51,13 @@ class ABikesSimulator(
       path.foreach: street =>
         currentJunction.semaphore match
           case None => ()
-          case Some(Semaphore(SemaphoreId(id), _, _, _, _)) =>
+          case Some(Semaphore(JunctionId(id), _, _, _, _)) =>
             val semaphoreBody = requestOrLogError(
               uri"$smartCityUri/semaphores/$id",
               retryUntilSuccessInterval = 1000
             ).get
             val sem = read[Semaphore](semaphoreBody)
-            print(s"${logPrefix}Semaphore $id is ${sem.state}")
+            print(s"${logPrefix}Semaphore on junction $id is ${sem.state}")
             if (sem.state == SemaphoreState.Red)
               val waitTime =
                 sem.nextChangeStateTimestamp - System.currentTimeMillis()
@@ -181,12 +181,11 @@ object ABikesSimulator:
       long => Date(long)
     )
 
-  case class SemaphoreId(value: String) derives ReadWriter
   enum SemaphoreState derives ReadWriter:
     case Red
     case Green
   case class Semaphore(
-      id: SemaphoreId,
+      junctionId: JunctionId,
       state: SemaphoreState,
       timeGreenMillis: Long,
       timeRedMillis: Long,

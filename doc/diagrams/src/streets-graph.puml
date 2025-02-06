@@ -15,8 +15,8 @@ note left of (J1)
 end note
 
 note as N
-    Every junction J<N> (except J1)
-    has a semaphore SEM<N>
+    Every junction with the exception
+    of J1 has a semaphore
 end note
 
 @enduml

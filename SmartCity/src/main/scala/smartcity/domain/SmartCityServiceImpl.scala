@@ -19,7 +19,7 @@ class SmartCityServiceImpl extends SmartCityService:
 
     val semaphores = Seq.tabulate(4)(n =>
       Semaphore(
-        SemaphoreId(s"SEM${n + 2}"),
+        JunctionId(s"J${n + 2}"),
         SemaphoreState.Green,
         random.between(3000, 5000),
         random.between(3000, 5000),
@@ -38,21 +38,23 @@ class SmartCityServiceImpl extends SmartCityService:
 
   // semaphores threads
   semaphores()
-    .map(_.id)
+    .map(_.junctionId)
     .foreach(id =>
       Thread
         .ofVirtual()
         .start: () =>
           while true do
             val s = junctions()
-              .find(_.semaphore.map(_.id) == Some(id))
+              .find(_.semaphore.map(_.junctionId) == Some(id))
               .get
               .semaphore
               .get
             Thread
               .sleep(s.nextChangeStateTimestamp - System.currentTimeMillis())
             synchronized:
-              val j = _junctions.find(_.semaphore.map(_.id) == Some(s.id)).get
+              val j = _junctions
+                .find(_.semaphore.map(_.junctionId) == Some(s.junctionId))
+                .get
               val newTimestamp = System.currentTimeMillis() + (s.state match
                 case SemaphoreState.Red   => s.timeRedMillis
                 case SemaphoreState.Green => s.timeGreenMillis
@@ -108,11 +110,11 @@ class SmartCityServiceImpl extends SmartCityService:
         .flatten
 
   override def semaphore(
-      id: SemaphoreId
+      junctionId: JunctionId
   ): Either[SemaphoreNotFound, Semaphore] =
     synchronized:
       semaphores()
-        .find(_.id == id)
-        .toRight(SemaphoreNotFound(id))
+        .find(_.junctionId == junctionId)
+        .toRight(SemaphoreNotFound(junctionId))
 
   override def healthCheckError(): Option[String] = None

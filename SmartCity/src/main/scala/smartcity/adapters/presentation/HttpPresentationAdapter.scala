@@ -24,11 +24,10 @@ object HttpPresentationAdapter:
     func2Reader(js => read[SemaphoreState](js.compactPrint)),
     func2Writer(s => write(s).parseJson)
   )
-  given RootJsonFormat[SemaphoreId] = jsonFormat1(SemaphoreId.apply)
+  given RootJsonFormat[JunctionId] = jsonFormat1(JunctionId.apply)
   given RootJsonFormat[Semaphore] = jsonFormat5(Semaphore.apply)
   given RootJsonFormat[StreetId] = jsonFormat1(StreetId.apply)
   given RootJsonFormat[Street] = jsonFormat2(Street.apply)
-  given RootJsonFormat[JunctionId] = jsonFormat1(JunctionId.apply)
   given RootJsonFormat[Junction] = jsonFormat4(Junction.apply)
   import shared.adapters.presentation.HealthCheckError
   given RootJsonFormat[HealthCheckError] = jsonFormat1(HealthCheckError.apply)
@@ -46,7 +45,7 @@ object HttpPresentationAdapter:
               complete(service.junctions().toArray)
             ,
             (get & path("semaphores" / Segment)): segment =>
-              val semaphoreId = SemaphoreId(segment)
+              val semaphoreId = JunctionId(segment)
               service.semaphore(semaphoreId) match
                 case Left(_) =>
                   complete(NotFound, s"Semaphore $segment doesn't exist")

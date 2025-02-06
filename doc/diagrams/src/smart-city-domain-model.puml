@@ -13,7 +13,7 @@ struct Street {
 }
 
 struct Semaphore {
-    id: SemaphoreId
+    junctionId: JunctionId
     timeGreenMillis: ULong
     timeRedMillis: ULong
     nextChangeStateTimestamp: Long

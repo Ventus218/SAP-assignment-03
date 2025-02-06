@@ -1,8 +1,7 @@
 package smartcity.domain.model
 
-final case class SemaphoreId(value: String)
 final case class Semaphore(
-    id: SemaphoreId,
+    junctionId: JunctionId,
     state: SemaphoreState,
     timeGreenMillis: Long,
     timeRedMillis: Long,

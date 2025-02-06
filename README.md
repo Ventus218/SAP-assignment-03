@@ -147,6 +147,7 @@ In this section are explained only non trivial domain design choices.
 For the sake of time and simplicity the following assumptions are made:
 - There's only one charging station
 - Semaphores block traffic in any direction
+- There can be at most one semaphore in a junction
 - Every street is bidirectional
 - The streets graph is fixed
 
