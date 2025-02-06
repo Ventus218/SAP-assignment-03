@@ -7,6 +7,7 @@ import upickle.default.*
 import ebikes.domain.model.*
 
 class ABikesSimulator(
+    eBikesServiceAddress: String,
     ridesServiceAddress: String,
     smartCityServiceAddress: String
 ) extends Runnable:
@@ -22,6 +23,7 @@ class ABikesSimulator(
   private def chargingStation: Junction =
     junctions.values.find(_.hasChargingStation).get
 
+  private val eBikesUri = s"http://$eBikesServiceAddress/ebikes"
   private val ridesUri = s"http://$ridesServiceAddress/rides"
   private val smartCityUri = s"http://$smartCityServiceAddress/smartcity"
 
@@ -49,9 +51,12 @@ class ABikesSimulator(
   private def rideSimulator(id: RideId): Unit =
     var waitForStateChange = false
     var currentJunction = chargingStation
+    var eBikeId = activeRides(id).eBikeId
 
     def ridePath(path: Seq[Street])(using logPrefix: String = ""): Unit =
+      import EBikeLocation.*
       path.foreach: street =>
+        updateEBikeLocation(eBikeId, Junction(currentJunction.id))
         currentJunction.semaphore match
           case None => ()
           case Some(Semaphore(JunctionId(id), _, _, _, _)) =>
@@ -60,23 +65,20 @@ class ABikesSimulator(
               .sendSyncLogError(retryUntilSuccessInterval = 1000)
               .get
             val sem = read[Semaphore](semaphoreBody)
-            print(s"${logPrefix}Semaphore on junction $id is ${sem.state}")
-            if (sem.state == SemaphoreState.Red)
+            if sem.state == SemaphoreState.Red then
               val waitTime =
                 sem.nextChangeStateTimestamp - System.currentTimeMillis()
-              print(s", wait for ${waitTime}ms")
               if waitTime > 0 then Thread.sleep(waitTime)
-            println("")
         val streetId = street.id.value
         val streetLength = street.timeLengthMillis
-        println(s"${logPrefix}Riding street $streetId for ${streetLength}ms")
+        updateEBikeLocation(eBikeId, Street(street.id))
         Thread.sleep(streetLength)
         currentJunction = junctions(
           (junctions.keySet - currentJunction.id)
             .find(k => junctions(k).streets(street))
             .get
         )
-        println(s"${logPrefix}Arrived at junction ${currentJunction.id.value}")
+        updateEBikeLocation(eBikeId, Junction(currentJunction.id))
 
     def getBestPath(from: JunctionId, to: JunctionId): Seq[Street] =
       val pathBody = quickRequest
@@ -84,6 +86,12 @@ class ABikesSimulator(
         .sendSyncLogError(retryUntilSuccessInterval = 1000)
         .get
       read[Seq[Street]](pathBody)
+
+    def updateEBikeLocation(eBikeId: EBikeId, location: EBikeLocation): Unit =
+      quickRequest
+        .patch(uri"$eBikesUri/${eBikeId.value}")
+        .jsonBody(UpdateEBikeLocationDTO(location))
+        .sendSyncLogError()
 
     while true do
       val ride = activeRides(id)
@@ -93,9 +101,7 @@ class ABikesSimulator(
         case RideStatus.BikeGoingToUser(junctionId) =>
           if waitForStateChange then ()
           else
-            println(s"$bikeId: Ride requested, going to ${ride.username.value}")
             ridePath(getBestPath(chargingStation.id, junctionId))
-            println(s"$bikeId: Arrived to ${ride.username.value}!")
             quickRequest
               .put(uri"$ridesUri/${id.value}/eBikeArrivedToUser")
               .sendSyncLogError(retryUntilSuccessInterval = 500)
@@ -104,13 +110,11 @@ class ABikesSimulator(
           // simulate random riding
           ridePath(Random.shuffle(currentJunction.streets.toSeq).take(1))
         case RideStatus.BikeGoingBackToStation =>
-          println(s"$bikeId: Ride finished, going back to charging station!")
           ridePath(getBestPath(currentJunction.id, chargingStation.id))
           quickRequest
             .put(uri"$ridesUri/${id.value}/eBikeReachedStation")
             .sendSyncLogError(retryUntilSuccessInterval = 500)
           setActiveRides(_ - id)
-          println(s"$bikeId: Arrived back to charging station!")
           return // exits function (terminating the thread)
       Thread.sleep(100)
 
@@ -202,3 +206,8 @@ object ABikesSimulator:
       semaphore: Option[Semaphore] = None,
       streets: Set[Street]
   ) derives ReadWriter
+
+  enum EBikeLocation derives ReadWriter:
+    case Junction(id: JunctionId)
+    case Street(id: StreetId)
+  case class UpdateEBikeLocationDTO(location: EBikeLocation) derives ReadWriter
