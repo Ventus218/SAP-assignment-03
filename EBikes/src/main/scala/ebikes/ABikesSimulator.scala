@@ -49,13 +49,11 @@ class ABikesSimulator(
 
     def ridePath(
         from: JunctionId,
-        to: JunctionId,
-        logPrefix: String = ""
-    ): Unit =
+        to: JunctionId
+    )(using logPrefix: String = ""): Unit =
       val pathBody = requestOrLogError(
         uri"$smartCityUri/path?from=${from.value}&to=${to.value}",
-        retryUntilSuccessInterval = 1000,
-        logPrefix = logPrefix
+        retryUntilSuccessInterval = 1000
       ).get
       val path = read[Seq[Street]](pathBody)
       path.foreach: street =>
@@ -64,8 +62,7 @@ class ABikesSimulator(
           case Some(Semaphore(SemaphoreId(id), _, _, _, _)) =>
             val semaphoreBody = requestOrLogError(
               uri"$smartCityUri/semaphores/$id",
-              retryUntilSuccessInterval = 1000,
-              logPrefix = logPrefix
+              retryUntilSuccessInterval = 1000
             ).get
             val sem = read[Semaphore](semaphoreBody)
             print(s"${logPrefix}Semaphore $id is ${sem.state}")
@@ -79,16 +76,16 @@ class ABikesSimulator(
     while true do
       val ride = activeRides(id)
       val bikeId = ride.eBikeId.value
+      given String = s"bikeId: "
       ride.status match
         case RideStatus.BikeGoingToUser(junctionId) =>
           if waitForStateChange then ()
           else
-            ridePath(chargingStation.id, junctionId, logPrefix = s"bikeId: ")
+            ridePath(chargingStation.id, junctionId)
             println(s"$bikeId: Arrived to user!")
             requestOrLogError(
               uri"$ridesUri/${id.value}/eBikeArrivedToUser",
               Method.PUT,
-              logPrefix = s"bikeId: ",
               retryUntilSuccessInterval = 500
             )
             waitForStateChange = true
@@ -105,15 +102,10 @@ class ABikesSimulator(
             .get
           println(s"$bikeId: Arrived at junction ${currentJunction.id.value}")
         case RideStatus.BikeGoingBackToStation =>
-          ridePath(
-            currentJunction.id,
-            chargingStation.id,
-            logPrefix = s"bikeId: "
-          )
+          ridePath(currentJunction.id, chargingStation.id)
           requestOrLogError(
             uri"$ridesUri/${id.value}/eBikeReachedStation",
             Method.PUT,
-            logPrefix = s"bikeId: ",
             retryUntilSuccessInterval = 500
           )
           setActiveRides(_ - id)
@@ -123,9 +115,8 @@ class ABikesSimulator(
   def requestOrLogError(
       uri: Uri,
       method: Method = Method.GET,
-      logPrefix: String = "",
       retryUntilSuccessInterval: Long = 0
-  ): Option[String] =
+  )(using logPrefix: String = ""): Option[String] =
     var result = Option.empty[String]
     while
       result = quickRequest.method(method, uri).send(DefaultSyncBackend()) match
