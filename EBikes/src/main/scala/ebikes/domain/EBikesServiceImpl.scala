@@ -31,12 +31,12 @@ class EBikesServiceImpl(
   override def eBikes(): Iterable[EBike] =
     querySide.getAll()
 
-  override def updatePhisicalData(
+  override def updateLocation(
       eBikeId: EBikeId,
       location: EBikeLocation
   )(using ExecutionContext): Future[CommandId] =
     val command =
-      EBikeCommands.UpdatePhisicalData(CommandId.random(), eBikeId, location)
+      EBikeCommands.UpdateLocation(CommandId.random(), eBikeId, location)
     commandSide.publish(command).map(_ => command.id)
 
   override def commandResult(

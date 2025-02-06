@@ -33,8 +33,8 @@ object HttpPresentationAdapter:
   given RootJsonFormat[EBikeId] = jsonFormat1(EBikeId.apply)
   given RootJsonFormat[EBike] = jsonFormat2(EBike.apply)
   given RootJsonFormat[RegisterEBikeDTO] = jsonFormat1(RegisterEBikeDTO.apply)
-  given RootJsonFormat[UpdateEBikePhisicalDataDTO] = jsonFormat1(
-    UpdateEBikePhisicalDataDTO.apply
+  given RootJsonFormat[UpdateEBikeLocationDTO] = jsonFormat1(
+    UpdateEBikeLocationDTO.apply
   )
   given RootJsonFormat[HealthCheckError] = jsonFormat1(HealthCheckError.apply)
   import shared.domain.EventSourcing.CommandId
@@ -72,9 +72,9 @@ object HttpPresentationAdapter:
                     case Some(value) => complete(value)
                 ,
                 (patch & pathEnd):
-                  entity(as[UpdateEBikePhisicalDataDTO]): dto =>
+                  entity(as[UpdateEBikeLocationDTO]): dto =>
                     onSuccess(
-                      eBikesService.updatePhisicalData(eBikeId, dto.location)
+                      eBikesService.updateLocation(eBikeId, dto.location)
                     ) { res =>
                       complete(res)
                     }

@@ -30,14 +30,14 @@ object EBikeCommands:
           Right(entities + (entityId -> EBike(entityId, location)))
         case Some(value) => Left(EBikeIdAlreadyInUse(entityId))
 
-  case class UpdatePhisicalData(
+  case class UpdateLocation(
       id: CommandId,
       entityId: EBikeId,
       location: EBikeLocation,
       timestamp: Option[Long] = None
   ) extends EBikeCommands:
 
-    def setTimestamp(timestamp: Long): UpdatePhisicalData =
+    def setTimestamp(timestamp: Long): UpdateLocation =
       copy(timestamp = Some(timestamp))
 
     override def apply(entities: Map[EBikeId, EBike])(using

@@ -14,7 +14,7 @@ trait EBikesService:
 
   def register(id: EBikeId)(using ExecutionContext): Future[CommandId]
 
-  def updatePhisicalData(
+  def updateLocation(
       eBikeId: EBikeId,
       location: EBikeLocation
   )(using ExecutionContext): Future[CommandId]
