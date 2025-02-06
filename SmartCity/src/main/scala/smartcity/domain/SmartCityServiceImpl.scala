@@ -17,23 +17,22 @@ class SmartCityServiceImpl extends SmartCityService:
     val junctions = Seq.tabulate(5)(n => JunctionId(s"J${n + 1}"))
     def j(n: Int) = junctions(n - 1)
 
-    val semaphores = Seq.tabulate(4)(n =>
+    def sem(id: JunctionId) = Some(
       Semaphore(
-        JunctionId(s"J${n + 2}"),
+        id,
         SemaphoreState.Green,
         random.between(3000, 5000),
         random.between(3000, 5000),
         System.currentTimeMillis() + 5000
       )
     )
-    def sem(n: Int) = Option(semaphores(n - 2))
 
     Set(
       Junction(j(1), true, None, Set(s(1), s(2), s(3), s(4))),
-      Junction(j(2), false, sem(2), Set(s(1), s(5))),
-      Junction(j(3), false, sem(3), Set(s(2), s(5), s(6))),
-      Junction(j(4), false, sem(4), Set(s(3), s(6))),
-      Junction(j(5), false, sem(5), Set(s(4)))
+      Junction(j(2), false, sem(j(2)), Set(s(1), s(5))),
+      Junction(j(3), false, sem(j(3)), Set(s(2), s(5), s(6))),
+      Junction(j(4), false, sem(j(4)), Set(s(3), s(6))),
+      Junction(j(5), false, sem(j(5)), Set(s(4)))
     )
 
   // semaphores threads
