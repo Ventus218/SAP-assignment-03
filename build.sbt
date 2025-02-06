@@ -14,40 +14,6 @@ lazy val akkaHttpSettings = Seq(
   libraryDependencies += "com.typesafe.akka" %% "akka-http-spray-json" % AkkaHttpVersion
 )
 
-lazy val commonFrontendSettings = Seq(
-  libraryDependencies += "org.scala-lang.modules" %% "scala-swing" % "3.0.0",
-  libraryDependencies += "com.softwaremill.sttp.client4" %% "core" % "4.0.0-M19", // for sttp
-  libraryDependencies += "com.lihaoyi" %% "upickle" % "4.0.2"
-)
-
-lazy val sharedFrontend = project
-  .in(file("SharedFrontend"))
-  .settings(
-    name := "Shared Frontend",
-    version := "0.1.0",
-    commonFrontendSettings
-  )
-
-lazy val userFrontend = project
-  .in(file("UserFrontend"))
-  .settings(
-    name := "User Frontend",
-    version := "0.1.0",
-    commonFrontendSettings,
-    assembly / assemblyOutputPath := file("./UserFrontend/executable.jar")
-  )
-  .dependsOn(sharedFrontend)
-
-lazy val adminFrontend = project
-  .in(file("AdminFrontend"))
-  .settings(
-    name := "Admin Frontend",
-    version := "0.1.0",
-    commonFrontendSettings,
-    assembly / assemblyOutputPath := file("./AdminFrontend/executable.jar")
-  )
-  .dependsOn(sharedFrontend)
-
 lazy val shared = project
   .in(file("Shared"))
   .settings(
