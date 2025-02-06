@@ -5,7 +5,6 @@ import shared.domain.EventSourcing.*
 import shared.ports.cqrs.QuerySide.Errors.*
 import ebikes.domain.model.*;
 import ebikes.domain.errors.*
-import ebikes.ports.persistence.EBikesRepository;
 import ebikes.ports.EBikesService
 import ebikes.ports.cqrs.*
 
@@ -15,13 +14,15 @@ class EBikesServiceImpl(
 ) extends EBikesService:
 
   given Unit = ()
-  override def register(
-      id: EBikeId,
-      location: V2D,
-      direction: V2D
-  )(using ExecutionContext): Future[CommandId] =
+  override def register(id: EBikeId)(using
+      ExecutionContext
+  ): Future[CommandId] =
     val command =
-      EBikeCommands.Register(CommandId.random(), id, location, direction)
+      EBikeCommands.Register(
+        CommandId.random(),
+        id,
+        EBikeLocation.Junction(JunctionId("J1"))
+      )
     commandSide.publish(command).map(_ => command.id)
 
   override def find(id: EBikeId): Option[EBike] =
@@ -32,18 +33,10 @@ class EBikesServiceImpl(
 
   override def updatePhisicalData(
       eBikeId: EBikeId,
-      location: Option[V2D],
-      direction: Option[V2D],
-      speed: Option[Double]
+      location: EBikeLocation
   )(using ExecutionContext): Future[CommandId] =
     val command =
-      EBikeCommands.UpdatePhisicalData(
-        CommandId.random(),
-        eBikeId,
-        location,
-        direction,
-        speed
-      )
+      EBikeCommands.UpdatePhisicalData(CommandId.random(), eBikeId, location)
     commandSide.publish(command).map(_ => command.id)
 
   override def commandResult(

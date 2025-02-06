@@ -12,17 +12,11 @@ trait EBikesService:
 
   def eBikes(): Iterable[EBike]
 
-  def register(
-      id: EBikeId,
-      location: V2D,
-      direction: V2D
-  )(using ExecutionContext): Future[CommandId]
+  def register(id: EBikeId)(using ExecutionContext): Future[CommandId]
 
   def updatePhisicalData(
       eBikeId: EBikeId,
-      location: Option[V2D],
-      direction: Option[V2D],
-      speed: Option[Double]
+      location: EBikeLocation
   )(using ExecutionContext): Future[CommandId]
 
   def commandResult(

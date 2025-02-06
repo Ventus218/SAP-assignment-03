@@ -18,11 +18,22 @@ import shared.adapters.presentation.HealthCheckError
 
 object HttpPresentationAdapter:
 
-  given RootJsonFormat[V2D] = jsonFormat2(V2D.apply)
+  import upickle.default.*
+  import spray.json.JsonFormat
+  import spray.json.JsonWriter.func2Writer
+  import spray.json.JsonReader.func2Reader
+  import spray.json.enrichString
+  given ReadWriter[StreetId] = ReadWriter.derived
+  given ReadWriter[JunctionId] = ReadWriter.derived
+  given ReadWriter[EBikeLocation] = ReadWriter.derived
+  given JsonFormat[EBikeLocation] = jsonFormat[EBikeLocation](
+    func2Reader(js => read[EBikeLocation](js.compactPrint)),
+    func2Writer(s => write(s).parseJson)
+  )
   given RootJsonFormat[EBikeId] = jsonFormat1(EBikeId.apply)
-  given RootJsonFormat[EBike] = jsonFormat4(EBike.apply)
-  given RootJsonFormat[RegisterEBikeDTO] = jsonFormat3(RegisterEBikeDTO.apply)
-  given RootJsonFormat[UpdateEBikePhisicalDataDTO] = jsonFormat3(
+  given RootJsonFormat[EBike] = jsonFormat2(EBike.apply)
+  given RootJsonFormat[RegisterEBikeDTO] = jsonFormat1(RegisterEBikeDTO.apply)
+  given RootJsonFormat[UpdateEBikePhisicalDataDTO] = jsonFormat1(
     UpdateEBikePhisicalDataDTO.apply
   )
   given RootJsonFormat[HealthCheckError] = jsonFormat1(HealthCheckError.apply)
@@ -47,9 +58,7 @@ object HttpPresentationAdapter:
             ,
             (post & pathEnd):
               entity(as[RegisterEBikeDTO]) { dto =>
-                onSuccess(
-                  eBikesService.register(dto.id, dto.location, dto.direction)
-                ) { res =>
+                onSuccess(eBikesService.register(dto.id)) { res =>
                   complete(res)
                 }
               }
@@ -65,12 +74,7 @@ object HttpPresentationAdapter:
                 (patch & pathEnd):
                   entity(as[UpdateEBikePhisicalDataDTO]): dto =>
                     onSuccess(
-                      eBikesService.updatePhisicalData(
-                        eBikeId,
-                        dto.location,
-                        dto.direction,
-                        dto.speed
-                      )
+                      eBikesService.updatePhisicalData(eBikeId, dto.location)
                     ) { res =>
                       complete(res)
                     }
