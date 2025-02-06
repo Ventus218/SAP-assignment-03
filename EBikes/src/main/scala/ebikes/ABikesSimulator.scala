@@ -2,6 +2,7 @@ package ebikes
 
 import scala.util.Random
 import sttp.client4.*
+import sttp.model.*
 import upickle.default.*
 import ebikes.domain.model.*
 
@@ -24,70 +25,57 @@ class ABikesSimulator(
   private val ridesUri = s"http://$ridesServiceAddress/rides"
   private val smartCityUri = s"http://$smartCityServiceAddress/smartcity"
 
-  def run(): Unit =
-    // getting streets graph
-    quickRequest
-      .get(uri"$smartCityUri/junctions")
-      .send(DefaultSyncBackend()) match
-      case res if res.code.isSuccess =>
-        junctions = read[Seq[Junction]](res.body).map(j => (j.id -> j)).toMap
-      case res =>
-        println(
-          s"Unable to get streets graph, status ${res.code}: ${res.body}"
-        ) // log error
-    while true do
-      quickRequest
-        .get(uri"$ridesUri/active")
-        .send(DefaultSyncBackend()) match
-        case res if res.code.isSuccess =>
-          val rides = read[Set[Ride]](res.body)
-          val newRides = rides.map(_.id) -- activeRides.keySet
-          setActiveRides(_ ++ rides.map(r => (r.id -> r)))
-          newRides.foreach(id =>
-            Thread.ofVirtual().start(() => rideSimulator(id))
-          )
-        case res =>
-          println(s"Status ${res.code}: ${res.body}") // log error
+  def getStreetsGraph(): Unit =
+    val body = requestOrLogError(
+      uri"$smartCityUri/junctions",
+      retryUntilSuccessInterval = 1000
+    ).get
+    junctions = read[Seq[Junction]](body).map(j => (j.id -> j)).toMap
 
+  def run(): Unit =
+    getStreetsGraph()
+    while true do
+      requestOrLogError(uri"$ridesUri/active").foreach: ridesBody =>
+        val rides = read[Set[Ride]](ridesBody)
+        val newRides = rides.map(_.id) -- activeRides.keySet
+        setActiveRides(_ ++ rides.map(r => (r.id -> r)))
+        newRides.foreach: id =>
+          Thread.ofVirtual().start(() => rideSimulator(id))
       Thread.sleep(1000)
 
   private def rideSimulator(id: RideId): Unit =
     var waitForStateChange = false
     var currentJunction = chargingStation
 
-    def ridePath(logPrefix: String, from: JunctionId, to: JunctionId): Unit =
-      quickRequest
-        .get(uri"$smartCityUri/path?from=${from.value}&to=${to.value}")
-        .send(DefaultSyncBackend()) match
-        case res if res.isSuccess =>
-          val path = read[Seq[Street]](res.body)
-          path.foreach: street =>
-            currentJunction.semaphore match
-              case None => ()
-              case Some(Semaphore(SemaphoreId(id), _, _, _, _)) =>
-                quickRequest
-                  .get(uri"$smartCityUri/semaphores/$id")
-                  .send(DefaultSyncBackend()) match
-                  case res if res.isSuccess =>
-                    val sem = read[Semaphore](res.body)
-                    print(s"$logPrefix: Semaphore $id is ${sem.state}")
-                    val waitTime =
-                      if (sem.state == SemaphoreState.Red)
-                        print(
-                          s", wait for ${sem.nextChangeStateTimestamp}ms"
-                        )
-                        Thread.sleep(sem.nextChangeStateTimestamp)
-                      println("")
-                  case res =>
-                    println(
-                      s"Failed best path request, status ${res.code}: ${res.body}"
-                    ) // log error
-            println(s"$logPrefix: Going through street ${street.id.value}")
-            Thread.sleep(street.timeLengthMillis)
-        case res =>
-          println(
-            s"Failed best path request, status ${res.code}: ${res.body}"
-          ) // log error
+    def ridePath(
+        from: JunctionId,
+        to: JunctionId,
+        logPrefix: String = ""
+    ): Unit =
+      val pathBody = requestOrLogError(
+        uri"$smartCityUri/path?from=${from.value}&to=${to.value}",
+        retryUntilSuccessInterval = 1000,
+        logPrefix = logPrefix
+      ).get
+      val path = read[Seq[Street]](pathBody)
+      path.foreach: street =>
+        currentJunction.semaphore match
+          case None => ()
+          case Some(Semaphore(SemaphoreId(id), _, _, _, _)) =>
+            val semaphoreBody = requestOrLogError(
+              uri"$smartCityUri/semaphores/$id",
+              retryUntilSuccessInterval = 1000,
+              logPrefix = logPrefix
+            ).get
+            val sem = read[Semaphore](semaphoreBody)
+            print(s"${logPrefix}Semaphore $id is ${sem.state}")
+            if (sem.state == SemaphoreState.Red)
+              print(s", wait for ${sem.nextChangeStateTimestamp}ms")
+              Thread.sleep(sem.nextChangeStateTimestamp)
+            println("")
+        println(s"${logPrefix}Going through street ${street.id.value}")
+        Thread.sleep(street.timeLengthMillis)
+
     while true do
       val ride = activeRides(id)
       val bikeId = ride.eBikeId.value
@@ -95,11 +83,14 @@ class ABikesSimulator(
         case RideStatus.BikeGoingToUser(junctionId) =>
           if waitForStateChange then ()
           else
-            ridePath(bikeId, chargingStation.id, junctionId)
+            ridePath(chargingStation.id, junctionId, logPrefix = s"bikeId: ")
             println(s"$bikeId: Arrived to user!")
-            quickRequest
-              .put(uri"$ridesUri/${id.value}/eBikeArrivedToUser")
-              .send(DefaultSyncBackend())
+            requestOrLogError(
+              uri"$ridesUri/${id.value}/eBikeArrivedToUser",
+              Method.PUT,
+              logPrefix = s"bikeId: ",
+              retryUntilSuccessInterval = 500
+            )
             waitForStateChange = true
         case RideStatus.UserRiding =>
           // simulate random riding
@@ -114,13 +105,43 @@ class ABikesSimulator(
             .get
           println(s"$bikeId: Arrived at junction ${currentJunction.id.value}")
         case RideStatus.BikeGoingBackToStation =>
-          ridePath(bikeId, currentJunction.id, chargingStation.id)
-          quickRequest
-            .put(uri"$ridesUri/${id.value}/eBikeReachedStation")
-            .send(DefaultSyncBackend())
+          ridePath(
+            currentJunction.id,
+            chargingStation.id,
+            logPrefix = s"bikeId: "
+          )
+          requestOrLogError(
+            uri"$ridesUri/${id.value}/eBikeReachedStation",
+            Method.PUT,
+            logPrefix = s"bikeId: ",
+            retryUntilSuccessInterval = 500
+          )
           setActiveRides(_ - id)
           return // exits function (terminating the thread)
       Thread.sleep(100)
+
+  def requestOrLogError(
+      uri: Uri,
+      method: Method = Method.GET,
+      logPrefix: String = "",
+      retryUntilSuccessInterval: Long = 0
+  ): Option[String] =
+    var result = Option.empty[String]
+    while
+      result = quickRequest.method(method, uri).send(DefaultSyncBackend()) match
+        case res if res.isSuccess => Some(res.body)
+        case res =>
+          println(
+            s"${logPrefix}${method.method} request $uri failed with status ${res.code}: ${res.body}"
+          )
+          if (retryUntilSuccessInterval != 0)
+            println(s"${logPrefix}retrying in ${retryUntilSuccessInterval}ms")
+            Thread.sleep(retryUntilSuccessInterval)
+          else ()
+          None
+      result.isEmpty && retryUntilSuccessInterval != 0
+    do ()
+    result
 
 private object Utils:
   import scala.concurrent.*
