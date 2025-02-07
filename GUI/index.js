@@ -1,4 +1,4 @@
-const bikesDiv = document.getElementById('bikes');
+const ridesDiv = document.getElementById('rides');
 const errorP = document.getElementById('error');
 
 function displayError(error) {
@@ -37,6 +37,14 @@ async function fetchData() {
     }
 }
 
+function rideStatusToText(rideStatus) {
+    if (rideStatus.$type) {
+        return `${rideStatus.$type} in ${rideStatus.junctionId.value}`
+    } else {
+        return rideStatus
+    }
+}
+
 async function fetchDataAndUpdate() {
     const data = await fetchData()
 
@@ -44,16 +52,30 @@ async function fetchDataAndUpdate() {
         clearError();
         const bikes = data.bikes
         const rides = data.rides
+        rides.forEach(ride => {
+            ride.eBike = bikes.find(b => b.id.value == ride.eBikeId.value)
+        })        
 
-        bikesDiv.innerHTML = '';
+        ridesDiv.innerHTML = '';
 
-        bikes.forEach(eBike => {
+        rides.forEach(ride => {
+            const eBike = ride.eBike
+            const div = document.createElement("div");
+            div.classList.add("col")
+            div.classList.add("text-center")
+            ridesDiv.appendChild(div)
+
+            const rideHeaderP = document.createElement('p');
+            rideHeaderP.textContent += `${ride.eBikeId.value} -- ${ride.username.value}: ${rideStatusToText(ride.status)}`;
+            rideHeaderP.classList.add("fw-bold")
+            console.log(ride);
+            
+            div.appendChild(rideHeaderP);
+
             const p = document.createElement('p');
             p.textContent += eBike.id.value + " is on ";
             p.textContent += eBike.location.$type.toLowerCase() + " " + eBike.location.id.value;
-            p.classList.add("col")
-            p.classList.add("text-center")
-            bikesDiv.appendChild(p);
+            div.appendChild(p);
         });
     } else {
         displayError(data.message)
