@@ -4,31 +4,59 @@ const errorP = document.getElementById('error');
 function displayError(error) {
     errorP.textContent = "" + error;
 }
+function clearError() {
+    errorP.textContent = "";
+}
 
-async function fetchDataAndUpdate() {
+async function fetchData() {
     try {
-        const response = await fetch('http://localhost:8081/ebikes');
-        if (response.ok) {
-            const data = await response.json();
-            console.log(data);
+        const bikesRequest = fetch('http://localhost:8081/ebikes');
+        const ridesRequest = fetch('http://localhost:8083/rides/active');
+        const bikesResponse = await bikesRequest;
+        const ridesResponse = await ridesRequest;
 
 
-            bikesDiv.innerHTML = '';
-
-            data.forEach(eBike => {
-                const p = document.createElement('p');
-                p.textContent += eBike.id.value + " is on ";
-                p.textContent += eBike.location.$type.toLowerCase() + " " + eBike.location.id.value;
-                p.classList.add("col")
-                p.classList.add("text-center")
-                bikesDiv.appendChild(p);
-            });
-            errorP.textContent = '';
+        if (bikesResponse.ok && ridesResponse.ok) {
+            return {
+                error: false,
+                bikes: await bikesResponse.json(),
+                rides: await ridesResponse.json()
+            }
         } else {
-            displayError(await response.text())
+            var message = ""
+            if (!bikesResponse.ok) {
+                message += await bikesResponse.text() + "\n\n"
+            }
+            if (!ridesResponse.ok) {
+                message += await ridesResponse.text()
+            }
+            return { error: true, message: message }
         }
     } catch (error) {
-        displayError(error)
+        return { error: true, message: "" + error }
+    }
+}
+
+async function fetchDataAndUpdate() {
+    const data = await fetchData()
+
+    if (!data.error) {
+        const bikes = data.bikes
+        const rides = data.rides
+
+        bikesDiv.innerHTML = '';
+
+        bikes.forEach(eBike => {
+            const p = document.createElement('p');
+            p.textContent += eBike.id.value + " is on ";
+            p.textContent += eBike.location.$type.toLowerCase() + " " + eBike.location.id.value;
+            p.classList.add("col")
+            p.classList.add("text-center")
+            bikesDiv.appendChild(p);
+        });
+        errorP.textContent = '';
+    } else {
+        displayError(data.message)
     }
 }
 
