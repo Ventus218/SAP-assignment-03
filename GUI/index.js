@@ -41,6 +41,7 @@ async function fetchDataAndUpdate() {
     const data = await fetchData()
 
     if (!data.error) {
+        clearError();
         const bikes = data.bikes
         const rides = data.rides
 
@@ -54,7 +55,6 @@ async function fetchDataAndUpdate() {
             p.classList.add("text-center")
             bikesDiv.appendChild(p);
         });
-        errorP.textContent = '';
     } else {
         displayError(data.message)
     }
