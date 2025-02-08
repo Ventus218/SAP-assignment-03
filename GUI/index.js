@@ -2,7 +2,6 @@ const bikesDiv = document.getElementById('ebikes');
 const usersDiv = document.getElementById('users');
 const ridesDiv = document.getElementById('rides');
 const errorP = document.getElementById('error');
-const stopRideButtons = {}
 
 function displayError(error) {
     errorP.textContent = "" + error;
@@ -71,6 +70,7 @@ async function fetchDataAndUpdate() {
         bikesHeaderP.textContent = "EBikes";
         bikesHeaderP.classList.add("fw-bold")
         bikesDiv.appendChild(bikesHeaderP)
+        
 
         bikes.forEach(b =>{
             const p = document.createElement('p');
@@ -116,21 +116,15 @@ async function fetchDataAndUpdate() {
             div.appendChild(p);
 
             if (ride.status == "UserRiding") {
-                var button = null
-                if (!stopRideButtons[ride.id.value]) {
-                    button = document.createElement("input")
-                    stopRideButtons[ride.id.value] = button
-                    button.type = "button"
-                    button.value = "Stop ride"
-                    button.onmousedown = (e => {
-                        fetch(
-                            "http://localhost:8083/rides/" + ride.id.value + "/userStoppedRiding",
-                            { method: 'POST', headers: { 'Content-type': 'application/json' } }
-                        );
-                    })
-                } else {
-                    button = stopRideButtons[ride.id.value]
-                }
+                const button = document.createElement("input")
+                button.type = "button"
+                button.value = "Stop ride"
+                button.onmousedown = (e => {
+                    fetch(
+                        "http://localhost:8083/rides/" + ride.id.value + "/userStoppedRiding",
+                        { method: 'POST', headers: { 'Content-type': 'application/json' } }
+                    );
+                })
                 div.appendChild(button)
             }
         });
