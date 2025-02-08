@@ -10,7 +10,7 @@ class SmartCityServiceImpl extends SmartCityService:
   private val random: Random = Random(1234)
 
   private val streets: Seq[Street] = Seq.tabulate(6): n =>
-    Street(StreetId(s"S${n + 1}"), random.between(500, 3000))
+    Street(StreetId(s"S${n + 1}"), random.between(4000, 8000))
   private def s(n: Int) = streets(n - 1)
 
   private var _junctions: Set[Junction] =
@@ -21,8 +21,8 @@ class SmartCityServiceImpl extends SmartCityService:
       Semaphore(
         id,
         SemaphoreState.Green,
-        random.between(3000, 5000),
-        random.between(3000, 5000),
+        random.between(7000, 10000),
+        random.between(7000, 10000),
         System.currentTimeMillis() + 5000
       )
     )
