@@ -160,7 +160,7 @@ For the sake of time and simplicity the following assumptions are made:
 - The streets graph is fixed
 
 ### Autonomous bikes behavior
-An [ABikeSimulator](./EBikes/src/main/scala/ebikes/ABikesSimulator.scala) simulates the autonomous behavior of the bikes.
+An [ABikeSimulator](./ABikesSimulator/src/main/scala/abikessimulator/ABikesSimulator.scala) simulates the autonomous behavior of the bikes.
 
 It works this way:
 1. Polls the rides service to get active rides.

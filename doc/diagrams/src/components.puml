@@ -4,21 +4,19 @@ left to right direction
 
 component "User frontend" as UserFE <<Client>>
 component "Admin frontend" as AdminFE <<Client>>
+component "ABike" <<Client>>
+
+component "Smart city" <<Microservice>> as SmartCity
+interface "Smart city REST API" as SmartCityAPI
+SmartCity -u-() SmartCityAPI
 
 component Backend <<Server>> {
-
-    component "Smart city" <<Microservice>> as SmartCity
-    interface "Smart city REST API" as SmartCityAPI
-    SmartCity -u-() SmartCityAPI
-    interface "Smart city events" <<Event Stream>> as SmartCityES
-    SmartCity --() SmartCityES
 
     component "EBikes" <<Microservice>> as EBikes
     interface "EBikes REST API" as EBikesAPI
     EBikes --u--() EBikesAPI
     interface "EBikes events" <<Event Stream>> as EBikesES
     EBikes -u-() EBikesES
-    EBikes -u-( SmartCityES
     
     component "Users" <<Microservice>> as Users
     interface "Users REST API" as UsersAPI
@@ -30,12 +28,11 @@ component Backend <<Server>> {
     interface "Rides REST API" as RidesAPI
     Rides -u-() RidesAPI
     interface "Rides events" <<Event Stream>> as RidesES
-    Rides -r-() RidesES
-    Rides -d-( UsersES
-    Rides -d-( EBikesES
+    Rides --() RidesES
+    Rides --( UsersES
+    Rides --( EBikesES
 
-    EBikes -u-( RidesES
-    SmartCity -l-( RidesES
+    EBikes -l-( RidesES
 }
 
 UserFE --( RidesAPI
@@ -46,5 +43,8 @@ AdminFE --( RidesAPI
 AdminFE --( UsersAPI
 AdminFE --( EBikesAPI
 AdminFE --( SmartCityAPI
+ABike ---( RidesAPI
+ABike ---( EBikesAPI
+ABike ---( SmartCityAPI
 
 @enduml
