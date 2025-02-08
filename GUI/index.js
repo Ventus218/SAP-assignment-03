@@ -1,3 +1,7 @@
+const bikesService = 'http://localhost:8081/ebikes'
+const usersService = 'http://localhost:8082/users'
+const ridesService = 'http://localhost:8083/rides'
+
 const bikesDiv = document.getElementById('ebikes');
 const usersDiv = document.getElementById('users');
 const ridesDiv = document.getElementById('rides');
@@ -12,9 +16,9 @@ function clearError() {
 
 async function fetchData() {
     try {
-        const bikesRequest = fetch('http://localhost:8081/ebikes');
-        const usersRequest = fetch('http://localhost:8082/users');
-        const ridesRequest = fetch('http://localhost:8083/rides/active');
+        const bikesRequest = fetch(bikesService);
+        const usersRequest = fetch(usersService);
+        const ridesRequest = fetch(`${ridesService}/active`);
         const bikesResponse = await bikesRequest;
         const usersResponse = await usersRequest;
         const ridesResponse = await ridesRequest;
@@ -82,7 +86,7 @@ async function fetchDataAndUpdate() {
             if (id) {
                 const body = JSON.stringify({ "id": { "value": id } })
                 fetch(
-                    "http://localhost:8081/ebikes",
+                    bikesService,
                     { method: 'POST', headers: { 'Content-type': 'application/json' }, body: body }
                 );
             }
@@ -112,7 +116,7 @@ async function fetchDataAndUpdate() {
             if (id) {
                 const body = JSON.stringify({ value: id })
                 fetch(
-                    "http://localhost:8082/users",
+                    usersService,
                     { method: 'POST', headers: { 'Content-type': 'application/json' }, body: body}
                 );
             }
@@ -157,7 +161,7 @@ async function fetchDataAndUpdate() {
                         }
                     )
                     fetch(
-                        "http://localhost:8083/rides",
+                        ridesService,
                         { method: 'POST', headers: { 'Content-type': 'application/json' }, body: body}
                     );
                 }
@@ -194,7 +198,7 @@ async function fetchDataAndUpdate() {
                 button.value = "Stop ride"
                 button.onmousedown = (e => {
                     fetch(
-                        "http://localhost:8083/rides/" + ride.id.value + "/userStoppedRiding",
+                        `${ridesService}/${ride.id.value}/userStoppedRiding`,
                         { method: 'POST', headers: { 'Content-type': 'application/json' } }
                     );
                 })
