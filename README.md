@@ -182,6 +182,10 @@ The system is designed follwing an event-driven microservices architecture where
 
 Every microservice will expose an HTTP REST API for client consumption while internally to the system communication will rely on an event broker.
 
+> **Note:**
+>
+> For the scope of this project just a demonstration GUI was realized instead of the two frontends.
+
 ![Components diagram](./doc/diagrams/components.png)
 
 ### CQRS and event sourcing
