@@ -1,5 +1,6 @@
 const ridesDiv = document.getElementById('rides');
 const errorP = document.getElementById('error');
+const stopRideButtons = {}
 
 function displayError(error) {
     errorP.textContent = "" + error;
@@ -68,7 +69,6 @@ async function fetchDataAndUpdate() {
             const rideHeaderP = document.createElement('p');
             rideHeaderP.textContent += `${ride.eBikeId.value} -- ${ride.username.value}: ${rideStatusToText(ride.status)}`;
             rideHeaderP.classList.add("fw-bold")
-            console.log(ride);
             
             div.appendChild(rideHeaderP);
 
@@ -76,12 +76,31 @@ async function fetchDataAndUpdate() {
             p.textContent += eBike.id.value + " is on ";
             p.textContent += eBike.location.$type.toLowerCase() + " " + eBike.location.id.value;
             div.appendChild(p);
+
+            if (ride.status == "UserRiding") {
+                var button = null
+                if (!stopRideButtons[ride.id.value]) {
+                    button = document.createElement("input")
+                    stopRideButtons[ride.id.value] = button
+                    button.type = "button"
+                    button.value = "Stop ride"
+                    button.onmousedown = (e => {
+                        fetch(
+                            "http://localhost:8083/rides/" + ride.id.value + "/userStoppedRiding",
+                            { method: 'POST', headers: { 'Content-type': 'application/json' } }
+                        );
+                    })
+                } else {
+                    button = stopRideButtons[ride.id.value]
+                }
+                div.appendChild(button)
+            }
         });
     } else {
         displayError(data.message)
     }
 }
 
-setInterval(fetchDataAndUpdate, 200);
+setInterval(fetchDataAndUpdate, 50);
 
 fetchDataAndUpdate();
