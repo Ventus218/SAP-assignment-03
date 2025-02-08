@@ -29,3 +29,10 @@ services:
     ports:
       - 8084:8080
     <<: *restart_policy
+
+  abikes-simulator:
+    volumes:
+      - ${HOME}/Desktop/EBikeApp/db:/data/db:rw
+    ports:
+      - 8085:8080
+    <<: *restart_policy

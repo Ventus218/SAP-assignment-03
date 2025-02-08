@@ -55,6 +55,16 @@ lazy val eBikes = project
   )
   .dependsOn(shared)
 
+lazy val aBikesSimulator = project
+  .in(file("ABikesSimulator"))
+  .settings(
+    name := "ABikesSimulator",
+    version := "0.1.0",
+    akkaHttpSettings,
+    assembly / assemblyOutputPath := file("./ABikesSimulator/executable.jar")
+  )
+  .dependsOn(shared)
+
 lazy val smartCity = project
   .in(file("SmartCity"))
   .settings(

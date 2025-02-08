@@ -69,6 +69,23 @@ services:
       <<: *common_environment
     <<: *common_healthcheck
 
+  abikes-simulator:
+    build:
+      args:
+        - executable=ABikesSimulator/executable.jar
+    networks:
+      - private_network
+    environment:
+      <<: *common_environment
+    depends_on:
+      smart-city:
+        condition: service_healthy
+      ebikes:
+        condition: service_healthy
+      rides:
+        condition: service_healthy
+    <<: *common_healthcheck
+
   kafka:
     image: apache/kafka:3.9.0
     networks:

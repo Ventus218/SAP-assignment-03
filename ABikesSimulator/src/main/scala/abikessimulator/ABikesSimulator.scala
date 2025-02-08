@@ -1,16 +1,15 @@
-package ebikes
+package abikessimulator
 
 import scala.util.Random
 import sttp.client4.*
 import sttp.model.*
 import upickle.default.*
-import ebikes.domain.model.*
 
 class ABikesSimulator(
     eBikesServiceAddress: String,
     ridesServiceAddress: String,
     smartCityServiceAddress: String
-) extends Runnable:
+):
   import Utils.*
   import ABikesSimulator.*
 
@@ -34,7 +33,7 @@ class ABikesSimulator(
       .get
     junctions = read[Seq[Junction]](body).map(j => (j.id -> j)).toMap
 
-  def run(): Unit =
+  def execute(): Unit =
     getStreetsGraph()
     while true do
       quickRequest
@@ -162,6 +161,8 @@ private object Utils:
       result
 
 object ABikesSimulator:
+  private case class EBikeId(value: String) derives ReadWriter
+
   private case class Username(value: String) derives ReadWriter
   private case class RideId(value: String) derives ReadWriter
 
@@ -177,7 +178,6 @@ object ABikesSimulator:
     case UserRiding
     case BikeGoingBackToStation
 
-  given ReadWriter[EBikeId] = ReadWriter.derived
   import java.util.Date
   given ReadWriter[Date] =
     readwriter[Long].bimap(
