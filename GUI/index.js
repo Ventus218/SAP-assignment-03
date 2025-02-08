@@ -70,25 +70,52 @@ async function fetchDataAndUpdate() {
         bikesHeaderP.textContent = "EBikes";
         bikesHeaderP.classList.add("fw-bold")
         bikesDiv.appendChild(bikesHeaderP)
+        const addBikeButton = document.createElement("input")
+        addBikeButton.type = "button"
+        addBikeButton.value = "Add e-bike"
+        addBikeButton.onmousedown = (e => {
+            const id = prompt("Insert EBike id")            
+            if (id) {
+                const body = JSON.stringify({ "id": { "value": id } })
+                fetch(
+                    "http://localhost:8081/ebikes",
+                    { method: 'POST', headers: { 'Content-type': 'application/json' }, body: body }
+                );
+            }
+        })
         
-
         bikes.forEach(b =>{
             const p = document.createElement('p');
             p.textContent = `${b.id.value}`;
             bikesDiv.appendChild(p);
         })
+        bikesDiv.appendChild(addBikeButton)
         
         usersDiv.innerHTML = '';
         const usersHeaderP = document.createElement('p');
         usersHeaderP.textContent = "Users";
         usersHeaderP.classList.add("fw-bold")
         usersDiv.appendChild(usersHeaderP)
-
+        const addUserButton = document.createElement("input")
+        addUserButton.type = "button"
+        addUserButton.value = "Add user"
+        addUserButton.onmousedown = (e => {
+            const id = prompt("Insert User username")
+            if (id) {
+                const body = JSON.stringify({ value: id })
+                fetch(
+                    "http://localhost:8082/users",
+                    { method: 'POST', headers: { 'Content-type': 'application/json' }, body: body}
+                );
+            }
+        })
+        
         users.forEach(u =>{
             const p = document.createElement('p');
             p.textContent = `${u.username.value}`;
             usersDiv.appendChild(p);
         })
+        usersDiv.appendChild(addUserButton)
 
         ridesDiv.innerHTML = '';
         const ridesHeaderP = document.createElement('p');
