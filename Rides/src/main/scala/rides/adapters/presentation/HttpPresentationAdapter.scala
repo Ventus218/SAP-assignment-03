@@ -53,15 +53,15 @@ object HttpPresentationAdapter:
                       case None        => complete(NotFound, "Ride not found")
                       case Some(value) => complete(value)
                   ,
-                  (put & path("eBikeArrivedToUser")):
+                  (post & path("eBikeArrivedToUser")):
                     onSuccess(ridesService.eBikeArrivedToUser(rideId)):
                       complete(_)
                   ,
-                  (put & path("userStoppedRiding")):
+                  (post & path("userStoppedRiding")):
                     onSuccess(ridesService.userStoppedRiding(rideId)):
                       complete(_)
                   ,
-                  (put & path("eBikeReachedStation")):
+                  (post & path("eBikeReachedStation")):
                     onSuccess(ridesService.eBikeReachedStation(rideId)):
                       complete(_)
                 )

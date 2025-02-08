@@ -103,7 +103,7 @@ class ABikesSimulator(
           else
             ridePath(getBestPath(chargingStation.id, junctionId))
             quickRequest
-              .put(uri"$ridesUri/${id.value}/eBikeArrivedToUser")
+              .post(uri"$ridesUri/${id.value}/eBikeArrivedToUser")
               .sendSyncLogError(retryUntilSuccessInterval = 500)
             waitForStateChange = true
         case RideStatus.UserRiding =>
@@ -112,7 +112,7 @@ class ABikesSimulator(
         case RideStatus.BikeGoingBackToStation =>
           ridePath(getBestPath(currentJunction.id, chargingStation.id))
           quickRequest
-            .put(uri"$ridesUri/${id.value}/eBikeReachedStation")
+            .post(uri"$ridesUri/${id.value}/eBikeReachedStation")
             .sendSyncLogError(retryUntilSuccessInterval = 500)
           setActiveRides(_ - id)
           return // exits function (terminating the thread)
