@@ -1,3 +1,5 @@
+const bikesDiv = document.getElementById('ebikes');
+const usersDiv = document.getElementById('users');
 const ridesDiv = document.getElementById('rides');
 const errorP = document.getElementById('error');
 const stopRideButtons = {}
@@ -12,21 +14,27 @@ function clearError() {
 async function fetchData() {
     try {
         const bikesRequest = fetch('http://localhost:8081/ebikes');
+        const usersRequest = fetch('http://localhost:8082/users');
         const ridesRequest = fetch('http://localhost:8083/rides/active');
         const bikesResponse = await bikesRequest;
+        const usersResponse = await usersRequest;
         const ridesResponse = await ridesRequest;
 
 
-        if (bikesResponse.ok && ridesResponse.ok) {
+        if (bikesResponse.ok && ridesResponse.ok && usersResponse.ok) {
             return {
                 error: false,
                 bikes: await bikesResponse.json(),
+                users: await usersResponse.json(),
                 rides: await ridesResponse.json()
             }
         } else {
             var message = ""
             if (!bikesResponse.ok) {
                 message += await bikesResponse.text() + "\n\n"
+            }
+            if (!usersResponse.ok) {
+                message += await usersResponse.text() + "\n\n"
             }
             if (!ridesResponse.ok) {
                 message += await ridesResponse.text()
@@ -52,12 +60,42 @@ async function fetchDataAndUpdate() {
     if (!data.error) {
         clearError();
         const bikes = data.bikes
+        const users = data.users
         const rides = data.rides
         rides.forEach(ride => {
             ride.eBike = bikes.find(b => b.id.value == ride.eBikeId.value)
-        })        
+        })
+
+        bikesDiv.innerHTML = '';
+        const bikesHeaderP = document.createElement('p');
+        bikesHeaderP.textContent = "EBikes";
+        bikesHeaderP.classList.add("fw-bold")
+        bikesDiv.appendChild(bikesHeaderP)
+
+        bikes.forEach(b =>{
+            const p = document.createElement('p');
+            p.textContent = `${b.id.value}`;
+            bikesDiv.appendChild(p);
+        })
+        
+        usersDiv.innerHTML = '';
+        const usersHeaderP = document.createElement('p');
+        usersHeaderP.textContent = "Users";
+        usersHeaderP.classList.add("fw-bold")
+        usersDiv.appendChild(usersHeaderP)
+
+        users.forEach(u =>{
+            const p = document.createElement('p');
+            p.textContent = `${u.username.value}`;
+            usersDiv.appendChild(p);
+        })
 
         ridesDiv.innerHTML = '';
+        const ridesHeaderP = document.createElement('p');
+        ridesHeaderP.textContent = "Rides";
+        ridesHeaderP.classList.add("fw-bold")
+        ridesHeaderP.classList.add("text-center")
+        ridesDiv.appendChild(ridesHeaderP)
 
         rides.forEach(ride => {
             const eBike = ride.eBike
