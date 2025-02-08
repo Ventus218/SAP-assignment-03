@@ -74,7 +74,11 @@ async function fetchDataAndUpdate() {
         addBikeButton.type = "button"
         addBikeButton.value = "Add e-bike"
         addBikeButton.onmousedown = (e => {
-            const id = prompt("Insert EBike id")            
+            const id = prompt("Insert EBike id") 
+            if (bikes.find(b => b.id.value == id)) {
+                alert("EBike id already in use")
+                return
+            }           
             if (id) {
                 const body = JSON.stringify({ "id": { "value": id } })
                 fetch(
@@ -101,6 +105,10 @@ async function fetchDataAndUpdate() {
         addUserButton.value = "Add user"
         addUserButton.onmousedown = (e => {
             const id = prompt("Insert User username")
+            if (users.find(u => u.username.value == id)) {
+                alert("Username already in use")
+                return
+            }
             if (id) {
                 const body = JSON.stringify({ value: id })
                 fetch(
