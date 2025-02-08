@@ -124,6 +124,44 @@ async function fetchDataAndUpdate() {
         ridesHeaderP.classList.add("text-center")
         ridesDiv.appendChild(ridesHeaderP)
 
+        const addRideButton = document.createElement("input")
+        addRideButton.type = "button"
+        addRideButton.value = "Start ride"
+        addRideButton.onmousedown = (e => {
+            const username = prompt("Insert user username")
+            const junctionId = prompt("Insert user position (J1, J2, J3, J4, J5)")
+            if (username && junctionId) {
+                if (!users.find(u => u.username.value == username) || !["J1", "J2", "J3", "J4", "J5"].find(j => j == junctionId)) {
+                    alert("Invalid username or junction")
+                    return
+                }
+                const bikeId = prompt("Insert requested bike name")
+                if (bikeId) {
+                    if (!bikes.find(b => b.id.value == bikeId)) {
+                        alert("Invalid bike id")
+                        return
+                    }
+                    const body = JSON.stringify(
+                        { 
+                            eBikeId: { value: bikeId }, 
+                            username: { value: username }, 
+                            junctionId: { value: junctionId }
+                        }
+                    )
+                    fetch(
+                        "http://localhost:8083/rides",
+                        { method: 'POST', headers: { 'Content-type': 'application/json' }, body: body}
+                    );
+                }
+            }
+        })
+        const _buttonDiv = document.createElement("div")
+        _buttonDiv.classList.add("col-12")
+        _buttonDiv.classList.add("d-flex")
+        _buttonDiv.classList.add("justify-content-center")
+        _buttonDiv.appendChild(addRideButton)
+        ridesDiv.appendChild(_buttonDiv)
+
         rides.forEach(ride => {
             const eBike = ride.eBike
             const div = document.createElement("div");
