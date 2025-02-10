@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rides
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: rides
+  template:
+    metadata:
+      labels:
+        name: rides
+    spec:
+      containers:
+        - name: rides
+          image: sap-assignment-03-rides
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - configMapRef:
+                name: environment
+          ports:
+            - containerPort: 8080
+          livenessProbe:
+            httpGet:
+              path: /healthCheck
+              port: 8080
+            initialDelaySeconds: 20
+            periodSeconds: 60
+            timeoutSeconds: 5
+            failureThreshold: 2
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rides
+spec:
+  selector:
+    name: rides
+  ports:
+    - protocol: TCP
+      port: 8080

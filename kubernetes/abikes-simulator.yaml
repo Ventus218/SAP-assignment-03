@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: abikes-simulator
+  labels:
+    name: abikes-simulator
+spec:
+  containers:
+    - name: abikes-simulator
+      image: sap-assignment-03-abikes-simulator
+      imagePullPolicy: IfNotPresent
+      envFrom:
+        - configMapRef:
+            name: environment
+      ports:
+        - containerPort: 8080
