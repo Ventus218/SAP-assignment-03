@@ -285,19 +285,35 @@ The configuration is split into two files:
 - [development.env](./development.env): defines some environment variables that are substituited when parsing the above yaml files.
 
 ### Production
-<!-- TODO: update! Kubernetes? -->
+For the production environment Kubernetes is the choice to implement resilience and scalability.
+
+In order to test the kuberenetes deployment the services used are of type NodePort which allow the host to connect to them.
+
+#### Kafka
+A kafka container is deployed as described in [kafka.yaml](./kubernetes/kafka.yaml).
+
+Essentially a singleton Pod with an associated Service used just for the routing capability.
+
+Of course kafka is a distributed system by itself and this configuration doesn't really make sense in a real world scenario.
+
+#### EBikes/Users/Rides microservices
+All these microservice follow the same configuration, for each one:
+- a deployment with 3 replicas is deployed
+- a service of type NodePort exposes these deployments
+
+Note that the service has a `sessionAffinity` parameter which allows to takle the problem described in the note of section [Possible replication](#possible-replication). In fact thanks to this setting the service will route the same client to the same pods. Since pods can be shut down and booted up unpredictably this solution just reduce the occurrence of problems related to this topic.
+
+#### Smart city microservice
+This service is deployed as a singleton pod as described in [smart-city.yaml](./kubernetes/smart-city.yaml) since it's simulating a service out of the system control.
+
+#### ABikes simulator
+The a-bikes simulator is deployed as a singleton pod as described in [abikes-simulator.yaml](./kubernetes/abikes-simulator.yaml) since it's simulating the bikes behavior.
 
 ## Fault tolerance / recovering
-<!-- TODO: update! Kubernetes? -->
-The system will exploit the underlying deployment platform (Docker / Docker compose) to restart services in case of failure.
+In both deployment platforms (Docker compose and Kubernetes) each service is kept monitored by a healthCheck which would let the platform restart it in case of failure.
 
 ## Service discovery
-<!-- TODO: update! Kubernetes? -->
-A service discovery mechanism has to be implemented due to the subsequent reasons:
-- Each microservice could be restarted in case of failure and as a consequence it could change it's network address
-- Future versions of the software may require to create multiple instances of the same service due to heavy workloads and therefore the network address may change at runtime.
-
-Given these requirements the built-in DNS service provided by Docker can be exploited to achieve the desired behavior.
+Both Docker compose and Kubernetes provide an easy solution to service discovery through their built-in DNS services.
 
 ## Configuration
 Since the microservices configuration does not need to be changed at runtime the simplest way to provide an externalized configuration is through enviornment variables that will be passed at deploy-time.
