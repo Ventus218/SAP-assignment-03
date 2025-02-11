@@ -108,6 +108,38 @@ def composeBuildProcess(
   s"docker compose $ymlFilesOptions --env-file $envFile build"
 }
 
+// DOCKER COMPOSE PUBLISH
+
+lazy val composePublish =
+  taskKey[Any]("Builds and publishes the docker images, it may take 20 minutes")
+composePublish := {
+  assembly.all(allProjectsFilter).value
+  composePublishProcess("production.env") !
+}
+
+lazy val composePublishDev = taskKey[Any](
+  "Builds and publishes the docker images (also loads the docker-compose.dev.yml), it may take 20 minutes"
+)
+composePublishDev := {
+  assembly.all(allProjectsFilter).value
+  composePublishProcess(
+    "development.env",
+    "docker-compose.yml",
+    "docker-compose.dev.yml"
+  ) !
+}
+
+def composePublishProcess(
+    envFile: String,
+    composeFiles: String*
+): ProcessBuilder = {
+  val ymlFilesOptions = composeFiles.map("-f " + _).mkString(" ")
+  composeBuildProcess(
+    envFile,
+    composeFiles*
+  ) #&& s"docker compose $ymlFilesOptions --env-file $envFile push"
+}
+
 // DOCKER COMPOSE UP
 
 lazy val composeUp =
