@@ -54,20 +54,41 @@ No deadlines.
  
 
 ## Usage
-Running from the build tool (automatically assembles the jars):
-```sh
-sbt composeUpDev
-```
 
-Otherwise with the jars already built:
+It's possible to both locally build the docker images or to use the uploaded ones on DockerHub.
+
+### Build the images locally (Optional)
 ```sh
+# You can either run
+sbt composeBuildDev
+# or
 docker compose -f ./docker-compose.yml -f ./docker-compose.dev.yml --env-file ./development.env build
+```
+### Run
+You can either run the system under Docker compose:
+```sh
+# You can either run
+sbt composeUpDev
+# or
 docker compose -f ./docker-compose.yml -f ./docker-compose.dev.yml  --env-file ./development.env up --force-recreate
 ```
-
-Otherwise you can pull the images from dockerhub:
+or Kubernetes:
 ```sh
-docker compose -f ./docker-compose.yml -f ./docker-compose.dev.yml -f ./docker-compose.hub.yml --env-file ./development.env up --force-recreate
+kubectl apply -f kubernetes
+```
+
+> **Note:**
+>
+> If you use minikube kubernetes will not automatically see the docker images you've built locally, but that should not be a problem as it should fall back to downloading them from DockerHub.
+>
+> If you are using the kubernetes environment integrated with Docker Desktop you should not encounter this problem.
+
+### Stop
+If you run on docker compose it should be enough to press ctrl+C on the terminal (or run `docker compose down`)
+
+If you run on kubernetes just run:
+```sh
+kubectl delete -f kubernetes
 ```
 
 ### GUI
