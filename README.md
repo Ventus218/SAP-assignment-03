@@ -3,6 +3,10 @@
 <!-- toc -->
 
 - [Usage](#usage)
+  * [Build the images locally (Optional)](#build-the-images-locally-optional)
+  * [Run](#run)
+  * [Stop](#stop)
+  * [GUI](#gui)
 - [Requirements](#requirements)
   * [User Stories](#user-stories)
   * [Business requirements](#business-requirements)
@@ -23,6 +27,12 @@
   * [Possible replication](#possible-replication)
   * [Handling HTTP Requests](#handling-http-requests)
 - [Deployment](#deployment)
+  * [Development](#development)
+  * [Production](#production)
+    + [Kafka](#kafka)
+    + [EBikes/Users/Rides microservices](#ebikesusersrides-microservices)
+    + [Smart city microservice](#smart-city-microservice-1)
+    + [ABikes simulator](#abikes-simulator)
 - [Fault tolerance / recovering](#fault-tolerance--recovering)
 - [Service discovery](#service-discovery)
 - [Configuration](#configuration)
