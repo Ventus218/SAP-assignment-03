@@ -3,36 +3,26 @@ x-restart_policy: &restart_policy
 
 services:
   ebikes:
-    volumes:
-      - ${HOME}/Desktop/EBikeApp/db:/data/db:rw
     ports:
       - 8081:8080
     <<: *restart_policy
 
   users:
-    volumes:
-      - ${HOME}/Desktop/EBikeApp/db:/data/db:rw
     ports:
       - 8082:8080
     <<: *restart_policy
 
   rides:
-    volumes:
-      - ${HOME}/Desktop/EBikeApp/db:/data/db:rw
     ports:
       - 8083:8080
     <<: *restart_policy
 
   smart-city:
-    volumes:
-      - ${HOME}/Desktop/EBikeApp/db:/data/db:rw
     ports:
       - 8084:8080
     <<: *restart_policy
 
   abikes-simulator:
-    volumes:
-      - ${HOME}/Desktop/EBikeApp/db:/data/db:rw
     ports:
       - 8085:8080
     <<: *restart_policy

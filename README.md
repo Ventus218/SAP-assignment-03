@@ -275,10 +275,17 @@ Obviously when applying event-sourcing commands that are not valid for the curre
 This is a bit of a burden for the client but it guarantees read-after-write consistency keeping the command side stateless.
 
 ## Deployment
-<!-- TODO: update! Kubernetes? -->
-Each microservice will be deployed as a standalone Docker container while the two frontends will be deployed as standard GUI apps.
 
-In order to achieve an effective and simple deployment a [docker compose file](./docker-compose.yml) has been written.
+### Development
+For the ease of development all services and the event store are deployed as containers under a docker compose configuration.
+
+The configuration is split into two files:
+- [docker-compose.yaml](./docker-compose.yml): defines the services, dependencies among them and their healthchecks
+- [docker-compose.dev.yaml](./docker-compose.dev.yml): defines host-containers port mappings
+- [development.env](./development.env): defines some environment variables that are substituited when parsing the above yaml files.
+
+### Production
+<!-- TODO: update! Kubernetes? -->
 
 ## Fault tolerance / recovering
 <!-- TODO: update! Kubernetes? -->
