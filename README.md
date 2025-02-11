@@ -180,7 +180,7 @@ It works this way:
 
 The system is designed follwing an event-driven microservices architecture where each bounded contexts is mapped to a single microservice or frontend.
 
-Every microservice will expose an HTTP REST API for client consumption while internally to the system communication will rely on an event broker.
+Every microservice will expose an HTTP REST API for client consumption while internally to the system communication will rely on event streams.
 
 > **Note:**
 >
@@ -201,12 +201,12 @@ In general every microservice will have the following architecture:
 This is a generic implementation of the CQRS and ES patterns.
 
 #### Event sourcing
-Basically every entity that wants to be even sourced should implement the Entity interface that just requires to expose an entity identifier.
+Basically every entity that wants to be event sourced should implement the Entity interface that just requires to expose an entity identifier.
 
 All the commands that can be applied to an entity must implement the Command interface which requires:
 - an *id* which uniquely identifies the command
-- an *entityId* which uniquely identifies the command
-- an optional timestamp which must be set when to the time the command was persisted
+- an *entityId* which uniquely identifies the entity
+- an optional timestamp which must be set to the time the command was persisted
 - and should provide an *apply* method which applies the command to an collection of entities and returns an updated collection or an error.
 - subclasses of Command should also provide an Environment which is a datatype that can hold any necessary data to perform the application of a command. (For example when applying a command which should create a ride it should also be able to access data about ebikes and users).
 
@@ -260,7 +260,7 @@ The query side is stateless while considering only event-sourcing and stateful i
 
 ### Handling HTTP Requests
 
-"Read" requests are trivial to handle, they just ask the query model and give the answer as a response.
+"Read" requests are trivial to handle, they just ask the query model and receive the answer as a response.
 
 "Write" requests are more difficult to handle, especially because the command side doesn't have any knowledge about the current state of the system and this means it cannot undestand if a request is valid or not (for example updating the state of a bike if it doesn't exist).
 
@@ -279,7 +279,7 @@ This is a bit of a burden for the client but it guarantees read-after-write cons
 ### Development
 For the ease of development all services and the event store are deployed as containers under a docker compose configuration.
 
-The configuration is split into two files:
+The configuration is split into multiple files:
 - [docker-compose.yaml](./docker-compose.yml): defines the services, dependencies among them and their healthchecks
 - [docker-compose.dev.yaml](./docker-compose.dev.yml): defines host-containers port mappings
 - [development.env](./development.env): defines some environment variables that are substituited when parsing the above yaml files.
@@ -301,7 +301,7 @@ All these microservice follow the same configuration, for each one:
 - a deployment with 3 replicas is deployed
 - a service of type NodePort exposes these deployments
 
-Note that the service has a `sessionAffinity` parameter which allows to takle the problem described in the note of section [Possible replication](#possible-replication). In fact thanks to this setting the service will route the same client to the same pods. Since pods can be shut down and booted up unpredictably this solution just reduce the occurrence of problems related to this topic.
+Note that the service has a `sessionAffinity` parameter which allows to takle the problem described in the note of section [Possible replication](#possible-replication). In fact thanks to this setting the service will route the same client to the same pod. Since pods can be shut down and booted up unpredictably this solution just reduce the occurrence of problems related to this topic.
 
 #### Smart city microservice
 This service is deployed as a singleton pod as described in [smart-city.yaml](./kubernetes/smart-city.yaml) since it's simulating a service out of the system control.
