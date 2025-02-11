@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: users
 spec:
-  replicas: 1
+  replicas: 3
   selector:
     matchLabels:
       name: users
@@ -38,6 +38,9 @@ metadata:
 spec:
   selector:
     name: users
+  type: NodePort
   ports:
-    - protocol: TCP
-      port: 8080
+    - port: 8080
+      targetPort: 8080
+      nodePort: 30002
+  sessionAffinity: ClientIP
