@@ -1,6 +1,6 @@
 package abikessimulator
 
-import scala.util.Random
+import scala.util.*
 import sttp.client4.*
 import sttp.model.*
 import upickle.default.*
@@ -122,20 +122,8 @@ private object Utils:
   import sttp.model.MediaType
 
   extension [T](r: Request[T])
-    def jsonBody(body: String): Request[T] =
-      r.body(body).contentType(MediaType.ApplicationJson)
-
     def jsonBody[U: ReadWriter](body: U): Request[T] =
       r.body(write(body)).contentType(MediaType.ApplicationJson)
-
-    def sendAsync()(using
-        ExecutionContext
-    ): Future[Either[String, Response[T]]] =
-      r.send(DefaultFutureBackend())
-        .map(Right(_))
-        .recover({ case t: Throwable =>
-          Left(t.getMessage())
-        })
 
   extension (r: Request[String])
     def sendSyncLogError(retryUntilSuccessInterval: Long = 0)(using
@@ -143,19 +131,27 @@ private object Utils:
     ): Option[String] =
       var result = Option.empty[String]
       while
-        result = r.send(DefaultSyncBackend()) match
-          case res if res.isSuccess => Some(res.body)
-          case res =>
-            println(
-              s"${logPrefix}${r.method} request ${r.uri} failed with status ${res.code}: ${res.body}"
-            )
-            if (retryUntilSuccessInterval != 0)
+        result = (for
+          response <- Try(r.send(DefaultSyncBackend()))
+          result = response match
+            case res if res.isSuccess => Some(res.body)
+            case res =>
               println(
-                s"${logPrefix}retrying in ${retryUntilSuccessInterval}ms"
+                s"${logPrefix}${r.method} request ${r.uri} failed with status ${res.code}: ${res.body}"
               )
-              Thread.sleep(retryUntilSuccessInterval)
-            else ()
+              None
+        yield (result)) match
+          case Success(value) => value
+          case Failure(t) =>
+            println(
+              s"${logPrefix}${r.method} request ${r.uri} failed with exception: $t"
+            )
             None
+        if result == None && retryUntilSuccessInterval != 0 then
+          println(
+            s"${logPrefix}retrying in ${retryUntilSuccessInterval}ms"
+          )
+          Thread.sleep(retryUntilSuccessInterval)
         result.isEmpty && retryUntilSuccessInterval != 0
       do ()
       result
