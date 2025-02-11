@@ -20,6 +20,8 @@ services:
     build:
       args:
         - executable=EBikes/executable.jar
+    image: ventus218/sap-assignment-03-ebikes
+    pull_policy: build
     networks:
       - private_network
     environment:
@@ -37,6 +39,8 @@ services:
     build:
       args:
         - executable=Users/executable.jar
+    image: ventus218/sap-assignment-03-users
+    pull_policy: build
     networks:
       - private_network
     environment:
@@ -50,6 +54,8 @@ services:
     build:
       args:
         - executable=Rides/executable.jar
+    image: ventus218/sap-assignment-03-rides
+    pull_policy: build
     networks:
       - private_network
     environment:
@@ -63,6 +69,8 @@ services:
     build:
       args:
         - executable=SmartCity/executable.jar
+    image: ventus218/sap-assignment-03-smart-city
+    pull_policy: build
     networks:
       - private_network
     environment:
@@ -73,6 +81,8 @@ services:
     build:
       args:
         - executable=ABikesSimulator/executable.jar
+    image: ventus218/sap-assignment-03-abikes-simulator
+    pull_policy: build
     networks:
       - private_network
     environment:

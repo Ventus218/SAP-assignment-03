@@ -7,7 +7,7 @@ metadata:
 spec:
   containers:
     - name: kafka
-      image: apache/kafka
+      image: apache/kafka:3.9.0
       env:
         - name: KAFKA_NODE_ID
           value: "1"

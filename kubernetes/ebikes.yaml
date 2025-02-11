@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: ebikes
-          image: sap-assignment-03-ebikes
+          image: ventus218/sap-assignment-03-ebikes
           imagePullPolicy: IfNotPresent
           envFrom:
             - configMapRef:

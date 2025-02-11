@@ -5,7 +5,7 @@ metadata:
 spec:
   containers:
     - name: abikes-simulator
-      image: sap-assignment-03-abikes-simulator
+      image: ventus218/sap-assignment-03-abikes-simulator
       imagePullPolicy: IfNotPresent
       envFrom:
         - configMapRef:

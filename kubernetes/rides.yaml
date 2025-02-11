@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: rides
-          image: sap-assignment-03-rides
+          image: ventus218/sap-assignment-03-rides
           imagePullPolicy: IfNotPresent
           envFrom:
             - configMapRef:
