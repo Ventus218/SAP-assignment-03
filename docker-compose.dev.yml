@@ -4,20 +4,20 @@ x-restart_policy: &restart_policy
 services:
   ebikes:
     ports:
-      - 8081:8080
+      - 30001:8080
     <<: *restart_policy
 
   users:
     ports:
-      - 8082:8080
+      - 30002:8080
     <<: *restart_policy
 
   rides:
     ports:
-      - 8083:8080
+      - 30003:8080
     <<: *restart_policy
 
   smart-city:
     ports:
-      - 8084:8080
+      - 30004:8080
     <<: *restart_policy

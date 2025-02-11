@@ -1,6 +1,6 @@
-const bikesService = 'http://localhost:8081/ebikes'
-const usersService = 'http://localhost:8082/users'
-const ridesService = 'http://localhost:8083/rides'
+const bikesService = 'http://localhost:30001/ebikes'
+const usersService = 'http://localhost:30002/users'
+const ridesService = 'http://localhost:30003/rides'
 
 const bikesDiv = document.getElementById('ebikes');
 const usersDiv = document.getElementById('users');
