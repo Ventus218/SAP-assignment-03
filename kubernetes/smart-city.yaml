@@ -1,34 +1,27 @@
-apiVersion: apps/v1
-kind: Deployment
+apiVersion: v1
+kind: Pod
 metadata:
   name: smart-city
+  labels:
+    name: smart-city
 spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      name: smart-city
-  template:
-    metadata:
-      labels:
-        name: smart-city
-    spec:
-      containers:
-        - name: smart-city
-          image: sap-assignment-03-smart-city
-          imagePullPolicy: IfNotPresent
-          envFrom:
-            - configMapRef:
-                name: environment
-          ports:
-            - containerPort: 8080
-          livenessProbe:
-            httpGet:
-              path: /healthCheck
-              port: 8080
-            initialDelaySeconds: 20
-            periodSeconds: 60
-            timeoutSeconds: 5
-            failureThreshold: 2
+  containers:
+    - name: smart-city
+      image: sap-assignment-03-smart-city
+      imagePullPolicy: IfNotPresent
+      envFrom:
+        - configMapRef:
+            name: environment
+      ports:
+        - containerPort: 8080
+      livenessProbe:
+        httpGet:
+          path: /healthCheck
+          port: 8080
+        initialDelaySeconds: 20
+        periodSeconds: 60
+        timeoutSeconds: 5
+        failureThreshold: 2
 
 ---
 apiVersion: v1
