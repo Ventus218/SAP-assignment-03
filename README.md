@@ -69,6 +69,22 @@ Otherwise you can pull the images from dockerhub:
 ```sh
 docker compose -f ./docker-compose.yml -f ./docker-compose.dev.yml -f ./docker-compose.hub.yml --env-file ./development.env up --force-recreate
 ```
+
+### GUI
+A simple GUI has been developed just for testing purposes.
+
+In the top part of the GUI a graph diagram shows the streets graph.
+
+1. Run `./GUI/setup.sh` to setup the GUI
+1. Open the `GUI/index.html` file in your browser
+1. Register a new user by clicking on the appropriate button
+1. Register a new bike by clicking on the appropriate button
+1. To simulate a user requesting a new bike:
+    1. Click on "Start ride"
+    1. Insert the requesting user username
+    1. Insert the junction in which the user is located
+    1. Insert the bike identifier
+1. The bottom part of the GUI will show every ride and a button to simulate the user's intent to stop riding
  
 ## Requirements
 
