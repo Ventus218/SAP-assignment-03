@@ -21,8 +21,3 @@ services:
     ports:
       - 8084:8080
     <<: *restart_policy
-
-  abikes-simulator:
-    ports:
-      - 8085:8080
-    <<: *restart_policy
