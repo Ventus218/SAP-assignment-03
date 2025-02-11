@@ -14,7 +14,6 @@ object Main extends App:
     ActorSystem(Behaviors.empty, "actor-system")
   given ExecutionContextExecutor = actorSystem.executionContext
 
-  val dbDir = File("/data/db")
   val host = sys.env.get("HOST").getOrElse("0.0.0.0")
   val port = (for
     portString <- sys.env.get("PORT")

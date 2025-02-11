@@ -5,7 +5,6 @@ import java.time.Duration
 import upickle.default.*
 import shared.ports.cqrs.QuerySide.*
 import shared.domain.EventSourcing.*
-import shared.ports.persistence.Repository
 import shared.technologies.Kafka.Consumer
 
 class QuerySideKafkaAdapter[TId, T <: Entity[

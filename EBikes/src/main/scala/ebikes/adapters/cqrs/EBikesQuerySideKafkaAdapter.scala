@@ -1,7 +1,6 @@
 package ebikes.adapters.cqrs
 
 import shared.adapters.cqrs.QuerySideKafkaAdapter
-import shared.ports.persistence.Repository
 import shared.domain.EventSourcing.CommandId
 import ebikes.domain.model.*
 import ebikes.ports.cqrs.EBikesQuerySide
