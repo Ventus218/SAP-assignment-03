@@ -79,6 +79,37 @@ import scala.sys.process.*
 
 val allProjectsFilter = ScopeFilter(projects = inAnyProject)
 
+// DOCKER COMPOSE BUILD
+
+lazy val composeBuild =
+  taskKey[Any]("Builds the docker images")
+composeBuild := {
+  assembly.all(allProjectsFilter).value
+  composeBuildProcess("production.env") !
+}
+
+lazy val composeBuildDev = taskKey[Any](
+  "Builds the docker images (also loads the docker-compose.dev.yml)"
+)
+composeBuildDev := {
+  assembly.all(allProjectsFilter).value
+  composeBuildProcess(
+    "development.env",
+    "docker-compose.yml",
+    "docker-compose.dev.yml"
+  ) !
+}
+
+def composeBuildProcess(
+    envFile: String,
+    composeFiles: String*
+): ProcessBuilder = {
+  val ymlFilesOptions = composeFiles.map("-f " + _).mkString(" ")
+  s"docker compose $ymlFilesOptions --env-file $envFile build"
+}
+
+// DOCKER COMPOSE UP
+
 lazy val composeUp =
   taskKey[Any]("Builds the docker images and runs compose up")
 composeUp := {
@@ -100,5 +131,6 @@ composeUpDev := {
 
 def composeUpProcess(envFile: String, composeFiles: String*): ProcessBuilder = {
   val ymlFilesOptions = composeFiles.map("-f " + _).mkString(" ")
-  s"docker compose $ymlFilesOptions --env-file $envFile build" #&& s"docker compose $ymlFilesOptions --env-file $envFile up --force-recreate"
+  composeBuildProcess(envFile, composeFiles*) #&&
+    s"docker compose $ymlFilesOptions --env-file $envFile up --force-recreate"
 }
