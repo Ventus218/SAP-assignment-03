@@ -89,17 +89,21 @@ class SmartCityServiceImpl extends SmartCityService:
 
               case ("J1", "J2") | ("J2", "J1") => Seq(s(1))
               case ("J1", "J3") | ("J3", "J1") => Seq(s(2))
-              case ("J1", "J4") | ("J4", "J1") => Seq(s(2), s(5))
+              case ("J1", "J4")                => Seq(s(2), s(5))
+              case ("J4", "J1")                => Seq(s(5), s(2))
               case ("J1", "J5") | ("J5", "J1") => Seq(s(3))
 
               case ("J3", "J2") | ("J2", "J3") => Seq(s(4))
               case ("J3", "J4") | ("J4", "J3") => Seq(s(5))
-              case ("J3", "J5") | ("J5", "J3") => Seq(s(5), s(6))
+              case ("J3", "J5")                => Seq(s(5), s(6))
+              case ("J5", "J3")                => Seq(s(3), s(2))
 
-              case ("J4", "J2") | ("J2", "J4") => Seq(s(5), s(4))
+              case ("J4", "J2")                => Seq(s(5), s(4))
+              case ("J2", "J4")                => Seq(s(4), s(5))
               case ("J4", "J5") | ("J5", "J4") => Seq(s(6))
 
-              case ("J5", "J2") | ("J2", "J5") => Seq(s(3), s(1))
+              case ("J5", "J2") => Seq(s(3), s(1))
+              case ("J2", "J5") => Seq(s(1), s(3))
           )
 
   private def semaphores(): Iterable[Semaphore] =
