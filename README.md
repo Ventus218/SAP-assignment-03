@@ -65,7 +65,7 @@ No deadlines.
 
 ## Usage
 
-It's possible to both locally build the docker images or to use the uploaded ones on DockerHub.
+It's possible to both locally build the docker images or use the ones uploaded on DockerHub.
 
 ### Build the images locally (Optional)
 ```sh
