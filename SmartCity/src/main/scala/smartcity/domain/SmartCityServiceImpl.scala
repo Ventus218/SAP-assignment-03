@@ -28,11 +28,11 @@ class SmartCityServiceImpl extends SmartCityService:
     )
 
     Set(
-      Junction(j(1), true, None, Set(s(1), s(2), s(3), s(4))),
-      Junction(j(2), false, sem(j(2)), Set(s(1), s(5))),
-      Junction(j(3), false, sem(j(3)), Set(s(2), s(5), s(6))),
-      Junction(j(4), false, sem(j(4)), Set(s(3), s(6))),
-      Junction(j(5), false, sem(j(5)), Set(s(4)))
+      Junction(j(1), true, None, Set(s(1), s(2), s(3))),
+      Junction(j(2), false, sem(j(2)), Set(s(1), s(4))),
+      Junction(j(3), false, sem(j(3)), Set(s(2), s(4), s(5))),
+      Junction(j(4), false, sem(j(4)), Set(s(5), s(6))),
+      Junction(j(5), false, sem(j(5)), Set(s(3), s(6)))
     )
 
   // semaphores threads
