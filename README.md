@@ -276,9 +276,9 @@ Two generic implementations are also provided to work with a Kafka backend:
 #### Example of usage (Users microservice)
 ![Users microservice domain model](./doc/diagrams/users-microservice-domain-model.png)
 
-UserCommands and UserCommandErrors were defined which represents respectively all the possible commands/events that a user can recevie and all the possible errors that could result from applying those commands.
+UserCommands and UserCommandErrors represents respectively all the possible commands/events that a user can recevie and all the possible errors that could result from applying those commands.
 
-The UsersService uses a UsersCommandSide and a QueryCommandSide which will then be implemented by their Kafka adapters.
+The UsersService uses a UsersCommandSide and a UsersQuerySide which will then be implemented by their Kafka adapters.
 
 #### Warning
 It's exetremely dangerous for other services to reason about commands published in these event sourcing topics, the reason is that the commands published are not known to be successfully appliable.
