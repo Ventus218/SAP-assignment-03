@@ -34,9 +34,7 @@ interface SmartCityService <<Service>> {
 
 
 Junction "1" -r-> "0..1" Semaphore : "              "
-Street "0..*" <-u- "1" Junction : "starts in >"
-Street -u[hidden]- Junction
-Street "0..*" <-u- "1" Junction : "ends in >"
+Street "0..*" <-u- "2" Junction
 Semaphore "1" --> "1" SemaphoreState : "state"
 SmartCityService "1" o- "0..*" Junction : "              "
 
