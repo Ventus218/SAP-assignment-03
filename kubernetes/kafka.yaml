@@ -37,7 +37,17 @@ spec:
           value: "-1" # Infinite log retention
         - name: KAFKA_LOG_MESSAGE_TIMESTAMP_TYPE
           value: LogAppendTime # Timestamps are set by brokers an not producers
-
+      readinessProbe: &probe
+        exec:
+          command:
+            - /bin/sh
+            - -c
+            - "/opt/kafka/bin/kafka-cluster.sh cluster-id --bootstrap-server kafka:9092 || exit 1"
+        initialDelaySeconds: 1
+        periodSeconds: 1
+        timeoutSeconds: 60
+        failureThreshold: 60
+      livenessProbe: *probe
 ---
 apiVersion: v1
 kind: Service
