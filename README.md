@@ -427,7 +427,7 @@ The system can be logically split into trhee "components":
 - Services
 - Event broker
 
-The Event broker role is played by Kafka which is a distributed system by itself, this means that it can be assumed that it will provide _availability_, _partition tolerance_ and some sort of _consistency_ (More on that later).
+The Event broker role is played by Kafka which is a distributed system by itself, this means that it can be assumed that it will provide **availability**, **partition tolerance** and some sort of **consistency** (More on that later).
 
 ### Partition tolerance
 
