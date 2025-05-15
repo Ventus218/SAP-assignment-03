@@ -36,6 +36,16 @@
 - [Fault tolerance / recovering](#fault-tolerance--recovering)
 - [Service discovery](#service-discovery)
 - [Configuration](#configuration)
+- [Regarding CAP theorem](#regarding-cap-theorem)
+  - [Partition tolerance](#partition-tolerance)
+    - [When a service instance can't reach the event broker](#when-a-service-instance-cant-reach-the-event-broker)
+    - [When a service instance can't be reached by Kubernetes' load balancer](#when-a-service-instance-cant-be-reached-by-kubernetes-load-balancer)
+  - [Availability](#availability)
+  - [Consistency](#consistency)
+    - [Ordering of events](#ordering-of-events)
+- [Scalability](#scalability)
+- [Fault tolerance](#fault-tolerance)
+- [Service replication](#service-replication)
 
 <!-- tocstop -->
 
