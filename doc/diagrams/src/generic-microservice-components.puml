@@ -2,7 +2,7 @@
 
 left to right direction
 
-component EventStore
+component EventBroker
 interface "HTTP REST API" as API
 
 hexagon Adapters {
@@ -19,17 +19,17 @@ hexagon Adapters {
     HTTPAdapter -d-> Service
     HTTPAdapter -l-() API
 
-    component OtherMicroserviceEventStoreAdapter
-    OtherMicroserviceEventStoreAdapter -u-|> OtherMicroservice
-    OtherMicroserviceEventStoreAdapter <-r- EventStore
+    component OtherMicroserviceEventBrokerAdapter
+    OtherMicroserviceEventBrokerAdapter -u-|> OtherMicroservice
+    OtherMicroserviceEventBrokerAdapter <-r- EventBroker
     
-    component QueryEventStoreAdapter
-    QueryEventStoreAdapter -u-|> Query
-    QueryEventStoreAdapter <-- EventStore
+    component QueryEventBrokerAdapter
+    QueryEventBrokerAdapter -u-|> Query
+    QueryEventBrokerAdapter <-- EventBroker
 
-    component CommandEventStoreAdapter
-    CommandEventStoreAdapter -u-|> Command
-    CommandEventStoreAdapter --> EventStore
+    component CommandEventBrokerAdapter
+    CommandEventBrokerAdapter -u-|> Command
+    CommandEventBrokerAdapter --> EventBroker
 }
 
 @enduml

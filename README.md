@@ -240,9 +240,9 @@ In general every microservice will have the following architecture:
 
 ![Generic microservice components diagram](./doc/diagrams/generic-microservice-components.png)
 
-- A command side will be used to publish commands (or command-events) to the event store.
+- A command side will be used to publish commands (or command-events) to the event broker.
 - A query side will consume published commands to use them for event-sourcing and if applicable materialise the state to achieve more efficient queries.
-- Any data needed from other microservices will be consumed off the event store and materialised as described in the query side.
+- Any data needed from other microservices will be consumed off the event broker and materialised as described in the query side.
 
 ![CQRS and ES](./doc/diagrams/cqrs-es-domain-model.png)
 This is a generic implementation of the CQRS and ES patterns.
@@ -271,7 +271,7 @@ Two generic implementations are also provided to work with a Kafka backend:
 
   This database is then a cache of all the commands and therefore it enables event sourcing of the entities.
 
-  A non-persistent database can be used because the actual store for every message is the event store, in fact upon starting the service the query side will get up to date fetching from Kafka every single command from the beginning.
+  A non-persistent database can be used because the actual store for every message is the event broker, in fact upon starting the service the query side will get up to date fetching from Kafka every single command from the beginning.
 
 #### Example of usage (Users microservice)
 ![Users microservice domain model](./doc/diagrams/users-microservice-domain-model.png)
@@ -324,7 +324,7 @@ This is a bit of a burden for the client but it guarantees read-after-write cons
 ## Deployment
 
 ### Development
-For the ease of development all services and the event store are deployed as containers under a docker compose configuration.
+For the ease of development all services and the event broker are deployed as containers under a docker compose configuration.
 
 The configuration is split into multiple files:
 - [docker-compose.yaml](./docker-compose.yml): defines the services, dependencies among them and their healthchecks
