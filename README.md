@@ -364,3 +364,67 @@ Both Docker compose and Kubernetes provide an easy solution to service discovery
 
 ## Configuration
 Since the microservices configuration does not need to be changed at runtime the simplest way to provide an externalized configuration is through enviornment variables that will be passed at deploy-time.
+
+# Emphasis on distributed systems aspects
+
+This type of architecture made it mandatory to handle classical distributed systems issues.
+This section focuses exactly on how these issues were tackled.
+
+## Regarding CAP theorem
+
+The system can be logically split into trhee "components":
+- Clients
+- Services
+- Event broker
+
+The Event broker role is played by Kafka which is a distributed system by itself, this means that it can be assumed that it will provide *availability*, *partition tolerance* and some sort of *consistency* (More on that later).
+
+### Partition tolerance
+
+Since services don't communicate directly with each other but they do it only through the event broker, they can be partitioned from one another without any issue.
+
+Therefore the only types of partition relevant to discuss are:
+
+#### When a service instance can't reach the event broker
+The service can poll the event broker in order to detect when it is not reachable anymore and then provide a negative healthcheck.
+Kubernetes will then start a new instance of the service possibly on a different node meanwhile traffic will be redirected to other instances.
+
+#### When a service instance can't be reached by Kubernetes' load balancer
+In this case Kubernetes will detect a failing healthcheck and act as described few lines above.
+
+### Availability
+
+Availability is provided by Kubernetes which is responsible for keeping up service replicas and load balance traffic to them.
+
+### Consistency
+
+Since partition tolerance and availability are provided it was decided to adopt an eventual consitency approach.
+
+Eventual consistency is implemented by exploiting event sourcing (ES).
+Each time a service is queried it will recompute the actual state based on all known events. This means that if the known events **eventually** change then the actual state of the system will be up to date as well.
+
+#### Ordering of events
+Ordering of events is crucial when it comes to ES.
+Kafka topics and partitions were used to achieve the desired result.
+
+Kafka topics are partially ordered based on event keys.
+
+A topic is divided into partitions, when a new event is received it's key is hashed and the result determines the partition in which it will be queued. This means that the developer can use appropriate keys in order to have total ordering on all events with the same key.
+
+For example if all events regarding bike A use "A" as the key all the events will be queued in the same partition and therefore totally ordered between them.
+
+## Scalability
+
+Scalability is provided by both Kafka and Kubernetes which allow to scale the number of nodes and therefore the available computational power of the system.
+
+## Fault tolerance
+
+Fault tolerance is provided by both Kafka and Kubernetes, each of them can be configured to hold a minimum amount of replicas in order to always have some nodes available.
+
+## Service replication
+Most of the properties that were achieved are based on the fact that services [can be replicated independently](#possible-replication).
+
+This was achieved by exploiting the [CQRS and ES](#cqrs-and-event-sourcing) which allowed for each service to be completely stateless and therefore replicable without any issues.
+
+The only caveat stands in the fact that independent services are bound to be inconsistent from one another and the if a client makes request accross different replicas of the same service it may encounter inconsistencies.
+This issue is highly minimized by the `sessionAffinity` setting in Kubernetes. This settings if set to "ClientIP" will ensure that Kubernetes' service will route the same client to the same service replica unless it goes offline.
