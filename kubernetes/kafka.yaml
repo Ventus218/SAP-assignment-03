@@ -42,7 +42,7 @@ spec:
           command:
             - /bin/sh
             - -c
-            - "/opt/kafka/bin/kafka-cluster.sh cluster-id --bootstrap-server kafka:9092 || exit 1"
+            - "nc -z kafka 9092 || exit 1"
         initialDelaySeconds: 1
         periodSeconds: 1
         timeoutSeconds: 60
