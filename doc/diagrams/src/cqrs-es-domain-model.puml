@@ -14,7 +14,7 @@ package domain {
         timestamp: Option<Long>
         {abstract} apply(entities: Map<TId, T>)(Env): Either<Error, Map<TId, T>>
         {abstract} setTimestamp(Long): Self
-        {static} applyCommands<TId, T extends Entity<TId>>(commands: Iterable<Command<TId, T, ?>)(Env): Map<TId, T>: Option<T>
+        {static} applyCommands<TId, T extends Entity<TId>>(commands: Iterable<Command<TId, T, ?>)(Env): Map<TId, T>
     }
     !endsub
 

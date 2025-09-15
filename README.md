@@ -357,7 +357,7 @@ So every "write" request will be handled as explained in this example:
 
 Obviously when applying event-sourcing commands that are not valid for the current state of the domain entity will just be ignored.
 
-This is a bit of a burden for the client but it guarantees read-after-write consistency keeping the command side stateless.
+This is a bit of a burden for the client but it allows to decouple command side and query side and make them independently replicable. (Notice that since the system is based on eventual consistency and ES the result of applying a command may still change)
 
 ## Deployment
 
