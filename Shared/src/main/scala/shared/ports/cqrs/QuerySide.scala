@@ -1,6 +1,8 @@
 package shared.ports.cqrs
 
 import shared.domain.EventSourcing.*
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
 
 object QuerySide:
   enum Errors:
@@ -23,3 +25,10 @@ object QuerySide:
     def commandResult(id: CommandId)(using
         Env
     ): Either[CommandNotFound, Either[Error, Map[TId, T]]]
+
+    /** Checks whether the QuerySide is working well
+      *
+      * @return
+      *   Some(errorMessage) if the healtCheck failed
+      */
+    def healthCheck(using ExecutionContext): Future[Option[String]]

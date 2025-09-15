@@ -6,6 +6,8 @@ import upickle.default.*
 import shared.ports.cqrs.QuerySide.*
 import shared.domain.EventSourcing.*
 import shared.technologies.Kafka.Consumer
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
 
 class QuerySideKafkaAdapter[TId, T <: Entity[
   TId
@@ -65,3 +67,12 @@ class QuerySideKafkaAdapter[TId, T <: Entity[
       case Some(c) =>
         val previousState = commands.takeWhile(_.id != id).applyCommands()
         Right(c(previousState))
+
+  import shared.technologies.Kafka
+  import shared.technologies.Kafka.Reachable.*
+  override def healthCheck(using ExecutionContext): Future[Option[String]] =
+    for isReachable <- Kafka.isReachable(bootstrapServers)
+    yield (isReachable match
+      case Reachable        => None
+      case Unreachable(err) => Some(err)
+    )

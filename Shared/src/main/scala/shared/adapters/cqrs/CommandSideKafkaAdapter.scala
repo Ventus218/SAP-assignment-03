@@ -21,3 +21,12 @@ abstract class CommandSideKafkaAdapter[TId, T <: Entity[
 
   def publish(command: C)(using ExecutionContext): Future[Unit] =
     Producer.send(producer, topic, command.id, command).map(_ => ())
+
+  import shared.technologies.Kafka
+  import shared.technologies.Kafka.Reachable.*
+  override def healthCheck(using ExecutionContext): Future[Option[String]] =
+    for isReachable <- Kafka.isReachable(bootstrapServers)
+    yield (isReachable match
+      case Reachable        => None
+      case Unreachable(err) => Some(err)
+    )

@@ -12,3 +12,10 @@ trait CommandSide[TId, T <: Entity[TId], Error, Env, C <: Command[
   C
 ]]:
   def publish(command: C)(using ExecutionContext): Future[Unit]
+
+  /** Checks whether the CommandSide is working well
+    *
+    * @return
+    *   Some(errorMessage) if the healtCheck failed
+    */
+  def healthCheck(using ExecutionContext): Future[Option[String]]
