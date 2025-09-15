@@ -10,8 +10,8 @@ x-common_healthcheck: &common_healthcheck
     test: curl --fail localhost:8080/healthCheck || exit 1
     start_period: 20s
     start_interval: 1s
-    interval: 60s
-    timeout: 5s
+    interval: 10s
+    timeout: 10s
     retries: 2
   restart: unless-stopped
 
