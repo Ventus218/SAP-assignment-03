@@ -5,6 +5,8 @@ import scala.jdk.OptionConverters.*
 import scala.jdk.CollectionConverters.*
 import java.util.Properties
 import upickle.default.*
+import scala.util.Success
+import scala.util.Failure
 
 object Kafka:
   object Consumer:
@@ -132,3 +134,20 @@ object Kafka:
                   .exceptionNow()
                   .isInstanceOf[TopicExistsException] =>
               Left(TopicAlreadyExists())
+
+  enum Reachable:
+    case Reachable
+    case Unreachable(errMessage: String)
+
+  def isReachable(
+      bootstrapServers: String
+  )(using ec: ExecutionContext): Future[Reachable] =
+    Future {
+      Consumer.autocloseable(bootstrapServers) { consumer =>
+        consumer.listTopics(java.time.Duration.ofSeconds(5))
+      }
+    }
+      .map(_ => Reachable.Reachable)
+      .recover({ case exception =>
+        Reachable.Unreachable(exception.getMessage())
+      })
