@@ -95,7 +95,7 @@ object HttpPresentationAdapter:
             )
           ,
           path("healthCheck"):
-            ridesService.healthCheckError() match
+            onSuccess(ridesService.healthCheckError):
               case None => complete(OK, HttpEntity.Empty)
               case Some(value) =>
                 complete(ServiceUnavailable, HealthCheckError(value))

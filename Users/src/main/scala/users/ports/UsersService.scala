@@ -17,4 +17,4 @@ trait UsersService:
       id: CommandId
   ): Either[CommandNotFound, Either[UserCommandErrors, Option[User]]]
 
-  def healthCheckError(): Option[String]
+  def healthCheckError(using ExecutionContext): Future[Option[String]]

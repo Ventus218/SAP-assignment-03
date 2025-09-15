@@ -6,6 +6,7 @@ import shared.ports.cqrs.QuerySide.Errors.*
 import users.domain.model.*;
 import users.ports.cqrs.*
 import users.ports.UsersService
+import shared.Utils
 
 class UsersServiceImpl(
     private val usersCommandSide: UsersCommandSide,
@@ -32,4 +33,10 @@ class UsersServiceImpl(
         val command = usersQuerySide.commands().find(_.id == id).get
         Right(value.map(_.get(command.entityId)))
 
-  override def healthCheckError(): Option[String] = None
+  override def healthCheckError(using
+      ExecutionContext
+  ): Future[Option[String]] =
+    for healthChecks <- Future.sequence(
+        Seq(usersCommandSide.healthCheck, usersQuerySide.healthCheck)
+      )
+    yield (Utils.combineHealthCheckErrors(healthChecks*))

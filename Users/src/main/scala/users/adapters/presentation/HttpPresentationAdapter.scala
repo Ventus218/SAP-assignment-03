@@ -62,10 +62,10 @@ object HttpPresentationAdapter:
           )
         ,
         path("healthCheck"):
-          usersService.healthCheckError() match
-            case None => complete(OK, HttpEntity.Empty)
-            case Some(value) =>
-              complete(ServiceUnavailable, HealthCheckError(value))
+          onSuccess(usersService.healthCheckError):
+              case None => complete(OK, HttpEntity.Empty)
+              case Some(value) =>
+                complete(ServiceUnavailable, HealthCheckError(value))
       )
 
     Http().newServerAt(host, port).bind(route)

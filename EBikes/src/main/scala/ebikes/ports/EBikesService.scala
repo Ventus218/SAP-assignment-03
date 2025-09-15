@@ -23,4 +23,4 @@ trait EBikesService:
       id: CommandId
   ): Either[CommandNotFound, Either[EBikeCommandErrors, Option[EBike]]]
 
-  def healthCheckError(): Option[String]
+  def healthCheckError(using ExecutionContext): Future[Option[String]]

@@ -99,7 +99,7 @@ object HttpPresentationAdapter:
           )
         ,
         path("healthCheck"):
-          eBikesService.healthCheckError() match
+          onSuccess(eBikesService.healthCheckError):
             case None => complete(OK, HttpEntity.Empty)
             case Some(value) =>
               complete(ServiceUnavailable, HealthCheckError(value))

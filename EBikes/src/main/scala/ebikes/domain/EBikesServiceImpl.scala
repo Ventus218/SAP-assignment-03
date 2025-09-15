@@ -7,6 +7,7 @@ import ebikes.domain.model.*;
 import ebikes.domain.errors.*
 import ebikes.ports.EBikesService
 import ebikes.ports.cqrs.*
+import shared.Utils
 
 class EBikesServiceImpl(
     private val commandSide: EBikesCommandSide,
@@ -49,4 +50,10 @@ class EBikesServiceImpl(
         entities.map(_.get(command.entityId))
       )
 
-  def healthCheckError(): Option[String] = None
+  override def healthCheckError(using
+      ExecutionContext
+  ): Future[Option[String]] =
+    for healthChecks <- Future.sequence(
+        Seq(commandSide.healthCheck, querySide.healthCheck)
+      )
+    yield (Utils.combineHealthCheckErrors(healthChecks*))

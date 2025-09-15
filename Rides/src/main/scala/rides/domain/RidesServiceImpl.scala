@@ -6,6 +6,7 @@ import rides.domain.model.*
 import rides.ports.*
 import rides.ports.cqrs.*
 import shared.ports.cqrs.QuerySide.Errors.CommandNotFound
+import shared.Utils
 
 class RidesServiceImpl(
     private val eBikesService: EBikesService,
@@ -66,5 +67,10 @@ class RidesServiceImpl(
         val command = querySide.commands().find(_.id == id).get
         Right(value.map(_.get(command.entityId)))
 
-  def healthCheckError(): Option[String] =
-    None
+  override def healthCheckError(using
+      ExecutionContext
+  ): Future[Option[String]] =
+    for healthChecks <- Future.sequence(
+        Seq(commandSide.healthCheck, querySide.healthCheck)
+      )
+    yield (Utils.combineHealthCheckErrors(healthChecks*))

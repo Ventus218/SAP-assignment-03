@@ -29,4 +29,4 @@ trait RidesService:
       id: CommandId
   ): Either[Errors.CommandNotFound, Either[RideCommandError, Option[Ride]]]
 
-  def healthCheckError(): Option[String]
+  def healthCheckError(using ExecutionContext): Future[Option[String]]
