@@ -46,12 +46,14 @@ class EBikesServiceKafkaAdapter(bootstrapServers: String, topic: String)
 
   def exists(eBikeId: EBikeId, atTimestamp: Long): Boolean =
     cache
+      .sortBy(_.timestamp.get)
       .takeWhile(_.timestamp.get <= atTimestamp)
       .map(_.entityId)
       .toSet(eBikeId)
 
   def eBikes(atTimestamp: Long): Set[EBikeId] =
     cache
+      .sortBy(_.timestamp.get)
       .takeWhile(_.timestamp.get <= atTimestamp)
       .map(_.entityId)
       .toSet

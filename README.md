@@ -466,6 +466,84 @@ A topic is divided into partitions, when a new event is received it's key is has
 
 For example if all events regarding bike A use "A" as the key all the events will be queued in the same partition and therefore totally ordered between them.
 
+#### How events from multiple streams are combined
+
+Applying commands to compute the state of entities in a topic (what is an entity is described in [CQRS and ES](#cqrs-and-event-sourcing)) may require knowledge about the state of entities in another topic. For example, in order for a **StartRideCommand** to be applied successfully it should be checked that both the user and the bike linked to that command actually exits.
+
+Combining events across topics must be done cosistently in order for each replica of a service to eventually reach the same state. There are 3 main approaches:
+
+1. **Requiring a strict sequencig accross all topics**:
+
+   Obviously wrong since it would defeat every benefit that was gained by chosing to use Kafka
+
+2. **Implementing vector clocks**:
+
+   Feasible but not that easy to implement
+
+3. **Sort events by log-append timestamp**:
+
+   Really easy to implement but has some implications that need to be considered
+
+It was decided to adopt **option 3**, let's see what are the aforementioned implications and why they are acceptable for this system.
+
+- Is the per-partition ordering of events preserved?
+
+  Yes, because timestamps are set when appending the event to the topic. The only caveat is to use a stable sorting algorithm in order to keep the ordering of events that may have been appended so closely to one another that they have the same log-append timestamp.
+
+- Kafka is a distributed system by itself and it does not synchronize clocks between brokers, is it safe to use timestamp for events ordering?
+
+  Using timestamps to sort events from nodes that do not synchronize their clocks would generally not work but if the system is not so strict on some properties then it can be done.
+
+  This system aims to achieve eventual consistency and does not care about clients seeing some inconsistencies and this is why it's possible to adopt this method.
+
+  <details>
+  <summary>
+  Here is an example of how non-synchronized timestamps would not cause an issue
+  </summary>
+  Let's assume that:
+
+  - client C wants to start a ride with a bike that still has to be registered to the system
+  - C is friend with admin A and they are side by side
+  - C sees A registering the bike and immediately request to start a ride with that bike
+  - topics for rides (R) and ebikes (E) resides on different brokers
+  - clocks of R and E has drifted of about 5 seconds (E clock is 5 seconds in the future with respect to R)
+
+  |                                          |                    |                    |
+  | ---------------------------------------- | ------------------ | ------------------ |
+  | **Actual order of events**:              | bike created       | start ride command |
+  | **Order of events sorted by timestamp**: | start ride command | bike created       |
+
+  What would happen is:
+
+  1. when the start ride command will be applied it will fail since the bike is still unknown
+  2. client C will retry to issue a start ride command
+  3. now the order of events sorted by timestamp would be:
+
+     |                                          |                    |              |                    |
+     | ---------------------------------------- | ------------------ | ------------ | ------------------ |
+     | **Order of events sorted by timestamp**: | start ride command | bike created | start ride command |
+
+  4. the second request will succed as the bike now is known to be registered
+  </details>
+
+- Kafka consumers may receive sequences of events with timestamp lower than the events already consumed, then sorting may become highly expensive because it should be done every time a consumer receives some events.
+
+  Yes, there is a little bit of sorting overhead but it is not that much since it's possible to exploit properties specific to this case to reduce it to the minimum.
+
+  Basically it is needed to concatenate two sequences of events (the events already received E1 and the new ones E2) and then sort them.
+
+  Some useful properties are:
+
+  - Generally speaking only E1 may become large in size
+  - E1 is already sorted
+  - E2 items will generally end up near the end of E1
+
+  These properties make it possible to apply an insertion sort where the comparison between timestamps starts from the last element of E1 (instead of the first) and then goes backward.
+
+  > **Note**:
+  >
+  > This enhancement was not actually implemented but just described here
+
 ## Scalability
 
 Scalability is provided by both Kafka and Kubernetes which allow to scale the number of nodes and therefore the available computational power of the system.

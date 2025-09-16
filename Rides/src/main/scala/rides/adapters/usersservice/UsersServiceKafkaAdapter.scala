@@ -46,6 +46,7 @@ class UsersServiceKafkaAdapter(bootstrapServers: String, topic: String)
 
   override def exists(username: Username, atTimestamp: Long): Boolean =
     cache
+      .sortBy(_.timestamp.get)
       .takeWhile(_.timestamp.get <= atTimestamp)
       .map(_.entityId)
       .toSet(username)
