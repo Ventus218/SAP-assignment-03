@@ -548,6 +548,16 @@ It was decided to adopt **option 3**, let's see what are the aforementioned impl
 
 Scalability is provided by both Kafka and Kubernetes which allow to scale the number of nodes and therefore the available computational power of the system.
 
+### One thing that is not currently scaling
+
+Currently the events are loaded by the services and they are all applied every time a client makes a query. This is obviously not going to scale when the number of events will become very large. It is possible (but was not implemented due to time constraints) to:
+
+- periodically compute and store a "snapshot" of the state and discard all the events previous to that snapshot (this can be done at service level, at kafka level or even both)
+- periodically remove events that do not actually alter the state
+- or do both things
+
+These approaches would require to establish a maximum amount of delay for events to be delivered.
+
 ## Fault tolerance
 
 Fault tolerance is provided by both Kafka and Kubernetes, each of them can be configured to hold a minimum amount of replicas in order to always have some nodes available.
