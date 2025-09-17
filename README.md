@@ -416,7 +416,7 @@ Since the microservices configuration does not need to be changed at runtime the
 
 # Emphasis on distributed systems aspects
 
-This type of architecture made it mandatory to handle classical distributed systems issues.
+This type of architecture made it mandatory to handle classical distributed systems problems.
 This section focuses exactly on how these issues were tackled.
 
 ## Regarding CAP theorem
