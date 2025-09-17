@@ -446,7 +446,7 @@ In this case Kubernetes will detect a failing healthcheck and act as described f
 
 ### Availability
 
-Availability is provided by Kubernetes which is responsible for keeping up service replicas and load balance traffic to them.
+Kubernetes provides high availability by instantiating multiple replicas of the services and ensuring that all of them are healthy.
 
 ### Consistency
 
