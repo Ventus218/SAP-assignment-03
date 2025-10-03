@@ -1,4 +1,4 @@
-# Assignment #03 - Software Architecture and Platforms - a.y. 2024-2025
+# Assignment #03 - Software Architecture and Platforms / Distributed Systems
 
 <!-- toc -->
 
